@@ -18,7 +18,8 @@
 <div class="box" id="loginBox">
   <h2>My Time</h2>
   <input type="password" id="password" placeholder="Enter password">
-  <button onclick="login()">Login</button>
+  <button id="loginBtn">Login</button>
+
 </div>
 
 <div class="box" id="appBox" style="display:none">
@@ -40,6 +41,8 @@
 const API = "https://my-time-backend.onrender.com";
 
 function login() {
+  alert("Login button clicked"); // TEMPORARY TEST
+
   fetch(API + "/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
