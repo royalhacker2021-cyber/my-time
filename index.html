@@ -11,7 +11,7 @@
       padding: 20px;
     }
     .card {
-      max-width: 700px;
+      max-width: 800px;
       margin: auto;
       background: #fff;
       padding: 20px;
@@ -23,6 +23,7 @@
     input, select, button, textarea {
       padding: 8px;
       font-size: 14px;
+      margin-top: 6px;
     }
     button {
       cursor: pointer;
@@ -35,6 +36,13 @@
       padding: 10px;
       width: 100%;
       margin-top: 10px;
+    }
+    .btn-secondary {
+      background: #6c757d;
+      color: #fff;
+      padding: 8px;
+      width: 100%;
+      margin-top: 6px;
     }
     .btn-green {
       background: #2ecc71;
@@ -62,6 +70,14 @@
       background: #d4edda;
       text-decoration: line-through;
     }
+    .row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .row > div {
+      flex: 1;
+    }
   </style>
 </head>
 
@@ -84,22 +100,38 @@
 <div id="timetableScreen" class="card hidden">
   <h3>Daily Timetable</h3>
 
-  <label>Date:</label>
-  <input type="date" id="ttDate">
-
-  <label style="margin-left:10px;">Time Gap:</label>
-  <select id="gapSelect">
-    <option value="30">30 Minutes</option>
-    <option value="60" selected>1 Hour</option>
-    <option value="120">2 Hours</option>
-  </select>
+  <div class="row">
+    <div>
+      <label>Date</label>
+      <input type="date" id="ttDate">
+    </div>
+    <div>
+      <label>Start Time</label>
+      <input type="time" id="startTime" value="05:00">
+    </div>
+    <div>
+      <label>End Time</label>
+      <input type="time" id="endTime" value="24:00">
+    </div>
+    <div>
+      <label>Gap</label>
+      <select id="gapSelect">
+        <option value="30">30 min</option>
+        <option value="60" selected>1 hour</option>
+        <option value="120">2 hours</option>
+      </select>
+    </div>
+  </div>
 
   <button class="btn" onclick="buildTable()">Build Timetable</button>
+
+  <button class="btn-secondary" onclick="copyDay(-1)">Copy Yesterday</button>
+  <button class="btn-secondary" onclick="copyDay(-7)">Copy Last Week</button>
 
   <table id="ttTable">
     <thead>
       <tr>
-        <th style="width:170px;">Time Range</th>
+        <th style="width:200px;">Time Range</th>
         <th>Mission / Task</th>
       </tr>
     </thead>
@@ -116,16 +148,12 @@ const API = "https://my-time-backend.onrender.com";
 /* LOGIN */
 loginBtn.onclick = () => {
   const pwd = passwordInput.value;
-
   fetch(API + "/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ password: pwd })
   })
-  .then(r => {
-    if (!r.ok) throw "Wrong password";
-    return r.json();
-  })
+  .then(r => { if(!r.ok) throw "Wrong password"; return r.json(); })
   .then(() => {
     loginBox.classList.add("hidden");
     dashboard.classList.remove("hidden");
@@ -137,7 +165,6 @@ function openTimetable(){
   dashboard.classList.add("hidden");
   timetableScreen.classList.remove("hidden");
   ttDate.valueAsDate = new Date();
-  buildTable();
 }
 
 function back(){
@@ -145,28 +172,32 @@ function back(){
   dashboard.classList.remove("hidden");
 }
 
-/* FORMAT TIME */
+/* TIME UTILS */
+function toMinutes(t){
+  const [h,m] = t.split(":").map(Number);
+  return h*60 + m;
+}
 function formatTime(min){
-  let h = Math.floor(min / 60);
-  let m = min % 60;
-  let ampm = h >= 12 ? "PM" : "AM";
-  h = h % 12;
-  if (h === 0) h = 12;
+  let h = Math.floor(min/60);
+  let m = min%60;
+  let ampm = h>=12 ? "PM":"AM";
+  h = h%12; if(h===0) h=12;
   return `${h}:${String(m).padStart(2,"0")} ${ampm}`;
 }
 
-/* BUILD TABLE WITH MERGED BLOCKS */
+/* BUILD TABLE */
 function buildTable(){
+  const start = toMinutes(startTime.value);
+  const end = toMinutes(endTime.value === "24:00" ? "24:00" : endTime.value);
   const gap = parseInt(gapSelect.value);
+
   const tbody = ttTable.querySelector("tbody");
   tbody.innerHTML = "";
 
-  let start = 5 * 60;   // 5:00 AM
-  const end = 24 * 60;  // 12:00 AM
-
-  while(start < end){
-    const finish = Math.min(start + gap, end);
-    const label = `${formatTime(start)} – ${formatTime(finish)}`;
+  let cur = start;
+  while(cur < end){
+    const next = Math.min(cur + gap, end);
+    const label = `${formatTime(cur)} – ${formatTime(next)}`;
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
@@ -174,14 +205,11 @@ function buildTable(){
       <td>
         <textarea data-time="${label}"></textarea>
         <button class="btn-green" onclick="markDone(this)">✔</button>
-      </td>
-    `;
+      </td>`;
     tbody.appendChild(tr);
-
-    start = finish;
+    cur = next;
   }
-
-  loadTimetable();
+  loadTimetable(ttDate.value);
 }
 
 function markDone(btn){
@@ -192,27 +220,40 @@ function markDone(btn){
 function saveTimetable(){
   const blocks = [];
   document.querySelectorAll("textarea").forEach(t=>{
-    blocks.push({
-      hour: t.dataset.time,
-      text: t.value,
-      date: ttDate.value
-    });
+    blocks.push({ hour:t.dataset.time, text:t.value, date:ttDate.value });
   });
-
-  fetch(API + "/timetable", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ date: ttDate.value, blocks })
+  fetch(API+"/timetable",{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ date:ttDate.value, blocks })
   }).then(()=>alert("Timetable saved"));
 }
 
-function loadTimetable(){
-  fetch(API + "/timetable?date=" + ttDate.value)
+function loadTimetable(date){
+  fetch(API+"/timetable?date="+date)
     .then(r=>r.json())
     .then(data=>{
       document.querySelectorAll("textarea").forEach(t=>{
-        const saved = data.find(b=>b.hour === t.dataset.time);
-        if(saved) t.value = saved.text;
+        const f = data.find(b=>b.hour===t.dataset.time);
+        if(f) t.value = f.text;
+      });
+    });
+}
+
+/* COPY DAY */
+function copyDay(offset){
+  const base = new Date(ttDate.value);
+  base.setDate(base.getDate()+offset);
+  const src = base.toISOString().split("T")[0];
+
+  if(!confirm("This will overwrite current timetable. Continue?")) return;
+
+  fetch(API+"/timetable?date="+src)
+    .then(r=>r.json())
+    .then(data=>{
+      document.querySelectorAll("textarea").forEach(t=>{
+        const f = data.find(b=>b.hour===t.dataset.time);
+        t.value = f ? f.text : "";
       });
     });
 }
