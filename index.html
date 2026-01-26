@@ -6,48 +6,115 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 
-<body style="font-family:Arial; background:#f6f7f9; padding:20px;">
+<body style="font-family:Arial;background:#f6f7f9;padding:20px;">
 
-  <div id="loginBox" style="max-width:400px;margin:auto;background:#fff;padding:20px;border-radius:8px;">
-    <h2>My Time</h2>
-    <input id="password" type="password" placeholder="Enter password" style="width:100%;padding:10px;">
-    <button id="loginBtn" style="width:100%;padding:10px;margin-top:10px;">
-      Login
-    </button>
-  </div>
+<!-- LOGIN -->
+<div id="loginBox" style="max-width:400px;margin:auto;background:#fff;padding:20px;border-radius:8px;">
+  <h2>My Time</h2>
+  <input id="password" type="password" placeholder="Enter password" style="width:100%;padding:10px;">
+  <button id="loginBtn" style="width:100%;padding:10px;margin-top:10px;">Login</button>
+</div>
 
-  <div id="appBox" style="display:none;max-width:400px;margin:auto;background:#fff;padding:20px;border-radius:8px;">
-    <h3>Logged in ✅</h3>
-    <p>JavaScript is working.</p>
-  </div>
+<!-- DASHBOARD -->
+<div id="dashboard" style="display:none;max-width:400px;margin:auto;background:#fff;padding:20px;border-radius:8px;">
+  <h3>Dashboard</h3>
+  <button onclick="openTasks()">Go to Tasks</button>
+</div>
 
-  <script>
-    // 🔴 HARD TEST — JS MUST RUN
-    alert("JavaScript loaded");
+<!-- TASKS SCREEN -->
+<div id="tasksScreen" style="display:none;max-width:400px;margin:auto;background:#fff;padding:20px;border-radius:8px;">
+  <h3>Tasks</h3>
 
-    const API = "https://my-time-backend.onrender.com"; // keep your real backend URL
+  <input type="date" id="taskDate" style="width:100%;padding:8px;">
+  <input id="taskInput" placeholder="New task" style="width:100%;padding:10px;margin-top:8px;">
+  <button onclick="addTask()" style="width:100%;padding:10px;margin-top:8px;">Add Task</button>
 
-    document.getElementById("loginBtn").addEventListener("click", function () {
-      alert("Login button clicked");
+  <ul id="taskList" style="padding:0;margin-top:10px;"></ul>
 
-      fetch(API + "/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          password: document.getElementById("password").value
-        })
-      })
-      .then(res => {
-        if (!res.ok) throw new Error("Wrong password");
-        return res.json();
-      })
-      .then(() => {
-        document.getElementById("loginBox").style.display = "none";
-        document.getElementById("appBox").style.display = "block";
-      })
-      .catch(err => alert(err.message));
+  <button onclick="backToDashboard()" style="width:100%;padding:10px;margin-top:10px;">
+    Back
+  </button>
+</div>
+
+<script>
+alert("JS Loaded");
+
+const API = "https://my-time-backend.onrender.com";
+
+/* LOGIN */
+document.getElementById("loginBtn").addEventListener("click", login);
+
+function login() {
+  fetch(API + "/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password: password.value })
+  })
+  .then(res => {
+    if (!res.ok) throw new Error("Wrong password");
+    return res.json();
+  })
+  .then(() => {
+    loginBox.style.display = "none";
+    dashboard.style.display = "block";
+  })
+  .catch(err => alert(err.message));
+}
+
+/* NAVIGATION */
+function openTasks() {
+  dashboard.style.display = "none";
+  tasksScreen.style.display = "block";
+  taskDate.valueAsDate = new Date();
+  loadTasks();
+}
+
+function backToDashboard() {
+  tasksScreen.style.display = "none";
+  dashboard.style.display = "block";
+}
+
+/* TASKS */
+function loadTasks() {
+  fetch(API + "/tasks?date=" + taskDate.value)
+    .then(r => r.json())
+    .then(data => {
+      taskList.innerHTML = "";
+      data.forEach(t => {
+        let li = document.createElement("li");
+        li.style.listStyle = "none";
+        li.style.padding = "6px";
+        li.innerHTML = `${t.text} 
+          <button onclick="completeTask('${t._id}')">✔</button>`;
+        taskList.appendChild(li);
+      });
     });
-  </script>
+}
+
+taskDate.onchange = loadTasks;
+
+function addTask() {
+  fetch(API + "/tasks", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      text: taskInput.value,
+      date: taskDate.value
+    })
+  }).then(() => {
+    taskInput.value = "";
+    loadTasks();
+  });
+}
+
+function completeTask(id) {
+  fetch(API + "/tasks/" + id, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ completed: true })
+  }).then(loadTasks);
+}
+</script>
 
 </body>
 </html>
