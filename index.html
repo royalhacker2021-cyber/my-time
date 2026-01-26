@@ -1,114 +1,53 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>My Time</title>  
+  <meta charset="UTF-8">
+  <title>My Time</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body { font-family: Arial; background:#f6f7f9; padding:20px; }
-    .box { max-width:400px; margin:auto; background:#fff; padding:20px; border-radius:8px; }
-    h2 { text-align:center; }
-    input, button { width:100%; padding:10px; margin-top:10px; }
-    ul { padding:0; }
-    li { list-style:none; padding:8px; border-bottom:1px solid #ddd; }
-    button { background:#000; color:#fff; border:none; }
-  </style>
 </head>
-<body>
 
-<div class="box" id="loginBox">
-  <h2>My Time</h2>
-  <input type="password" id="password" placeholder="Enter password">
-  <button id="loginBtn">Login</button>
+<body style="font-family:Arial; background:#f6f7f9; padding:20px;">
 
-</div>
+  <div id="loginBox" style="max-width:400px;margin:auto;background:#fff;padding:20px;border-radius:8px;">
+    <h2>My Time</h2>
+    <input id="password" type="password" placeholder="Enter password" style="width:100%;padding:10px;">
+    <button id="loginBtn" style="width:100%;padding:10px;margin-top:10px;">
+      Login
+    </button>
+  </div>
 
-<div class="box" id="appBox" style="display:none">
-  <h3>📅 Select Date</h3>
-  <input type="date" id="datePicker" />
+  <div id="appBox" style="display:none;max-width:400px;margin:auto;background:#fff;padding:20px;border-radius:8px;">
+    <h3>Logged in ✅</h3>
+    <p>JavaScript is working.</p>
+  </div>
 
-  <h3>📝 Tasks</h3>
-  <input id="taskInput" placeholder="New task">
-  <button onclick="addTask()">Add</button>
+  <script>
+    // 🔴 HARD TEST — JS MUST RUN
+    alert("JavaScript loaded");
 
-  <ul id="tasks"></ul>
+    const API = "https://my-time-backend.onrender.com"; // keep your real backend URL
 
-  <button onclick="loadHistory()">📂 View Completed Tasks</button>
-  <ul id="history"></ul>
-</div>
+    document.getElementById("loginBtn").addEventListener("click", function () {
+      alert("Login button clicked");
 
-
-<script>
-const API = "https://my-time-backend.onrender.com";
-
-function login() {
-  alert("Login button clicked"); // TEMPORARY TEST
-
-  fetch(API + "/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ password: password.value })
-  })
-  .then(res => res.json().then(data => {
-    if (!res.ok) throw new Error(data.error || "Login failed");
-    return data;
-  }))
-  .then(() => {
-    loginBox.style.display = "none";
-    appBox.style.display = "block";
-    datePicker.valueAsDate = new Date();
-    loadTasks();
-  })
-  .catch(err => alert(err.message));
-}
-
-
-function loadTasks(){
-  fetch(API + "/tasks?date=" + datePicker.value)
-    .then(r=>r.json())
-    .then(data=>{
-      tasks.innerHTML="";
-      data.forEach(t=>{
-        let li=document.createElement("li");
-        li.innerHTML = `${t.text} <button onclick="completeTask('${t._id}')">✔</button>`;
-        tasks.appendChild(li);
+      fetch(API + "/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          password: document.getElementById("password").value
+        })
       })
-    })
-}
-
-datePicker.onchange = loadTasks;
-
-function addTask(){
-  fetch(API+"/tasks",{
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({
-      text: taskInput.value,
-      date: datePicker.value
-    })
-  }).then(()=>{
-    taskInput.value="";
-    loadTasks();
-  })
-}
-
-function completeTask(id){
-  fetch(API+"/tasks/"+id,{
-    method:"PUT",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({ completed:true })
-  }).then(loadTasks)
-}
-
-function loadHistory(){
-  fetch(API+"/history")
-    .then(r=>r.json())
-    .then(data=>{
-      history.innerHTML="";
-      data.forEach(t=>{
-        let li=document.createElement("li");
-        li.textContent = `${t.text} (${t.date})`;
-        history.appendChild(li);
+      .then(res => {
+        if (!res.ok) throw new Error("Wrong password");
+        return res.json();
       })
-    })
-}
+      .then(() => {
+        document.getElementById("loginBox").style.display = "none";
+        document.getElementById("appBox").style.display = "block";
+      })
+      .catch(err => alert(err.message));
+    });
+  </script>
 
+</body>
+</html>
