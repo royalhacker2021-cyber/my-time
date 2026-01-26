@@ -10,10 +10,10 @@ app.use(express.json());
 const PASSWORD = "Dhir@123";
 const MONGO_URI = process.env.MONGO_URI;
 
-// ===== DB CONNECT =====
+// ===== DB =====
 mongoose.connect(MONGO_URI)
   .then(() => console.log("MongoDB connected"))
-  .catch(err => console.error("Mongo error:", err));
+  .catch(err => console.error(err));
 
 // ===== SCHEMAS =====
 
@@ -24,28 +24,25 @@ const TaskSchema = new mongoose.Schema({
   date: String,
   createdAt: { type: Date, default: Date.now }
 });
-
 const Task = mongoose.model("Task", TaskSchema);
 
-// TIMETABLE (CRITICAL FIX)
+// TIMETABLE (FINAL, CONSISTENT)
 const TimetableSchema = new mongoose.Schema({
   date: { type: String, index: true },
-  key: String,        // stable key like "300-360"
+  hour: String,   // "300-360"
   text: String
 });
-
 const Timetable = mongoose.model("Timetable", TimetableSchema);
 
 // ===== AUTH =====
 app.post("/login", (req, res) => {
-  if (!req.body || !req.body.password) {
+  if (!req.body?.password) {
     return res.status(400).json({ error: "Password missing" });
   }
-
   if (req.body.password === PASSWORD) {
-    return res.json({ success: true });
+    res.json({ success: true });
   } else {
-    return res.status(401).json({ error: "Wrong password" });
+    res.status(401).json({ error: "Wrong password" });
   }
 });
 
@@ -74,45 +71,44 @@ app.put("/tasks/:id", async (req, res) => {
 
 // ===== TIMETABLE APIs =====
 
-// GET timetable for a date
+// GET timetable
 app.get("/timetable", async (req, res) => {
   const { date } = req.query;
   if (!date) return res.json([]);
-
-  const blocks = await Timetable.find({ date });
-  res.json(blocks);
+  const data = await Timetable.find({ date });
+  res.json(data);
 });
 
-// SAVE timetable for a date (FULL OVERWRITE)
+// SAVE timetable (overwrite per date)
 app.post("/timetable", async (req, res) => {
   try {
     const { date, blocks } = req.body;
 
     if (!date || !Array.isArray(blocks)) {
-      return res.status(400).json({ error: "Invalid timetable data" });
+      return res.status(400).json({ error: "Invalid data" });
     }
 
-    // 1. Delete existing timetable for that date
     await Timetable.deleteMany({ date });
 
-    // 2. Insert clean blocks (date enforced here)
-    const cleanBlocks = blocks.map(b => ({
+    const clean = blocks.map(b => ({
       date,
-      key: b.hour,   // stable key like "300-360"
+      hour: b.hour,   // SAME NAME
       text: b.text || ""
     }));
 
-    if (cleanBlocks.length > 0) {
-      await Timetable.insertMany(cleanBlocks);
+    if (clean.length) {
+      await Timetable.insertMany(clean);
     }
 
     res.json({ success: true });
   } catch (err) {
-    console.error("Timetable save error:", err);
-    res.status(500).json({ error: "Failed to save timetable" });
+    console.error("Timetable error:", err);
+    res.status(500).json({ error: "Save failed" });
   }
 });
 
 // ===== SERVER =====
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("Server running on port", PORT));
+app.listen(PORT, () =>
+  console.log("Server running on port", PORT)
+);
