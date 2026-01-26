@@ -30,41 +30,17 @@ button {
   border-radius: 6px;
   cursor: pointer;
 }
-.btn {
-  background: #185a9d;
-  color: #fff;
-  width: 100%;
-  padding: 10px;
-  margin-top: 10px;
-}
-.btn-secondary {
-  background: #6c757d;
-  color: #fff;
-  width: 100%;
-  padding: 8px;
-  margin-top: 6px;
-}
-.btn-green {
-  background: #2ecc71;
-  color: #fff;
-  padding: 6px 10px;
-  margin-left: 6px;
-}
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 10px;
-}
-th, td {
-  border: 1px solid #ddd;
-  padding: 6px;
-}
+.btn { background:#185a9d;color:#fff;width:100%;padding:10px;margin-top:10px; }
+.btn-secondary { background:#6c757d;color:#fff;width:100%;padding:8px;margin-top:6px; }
+.btn-green { background:#2ecc71;color:#fff;padding:6px 10px;margin-left:6px; }
+table { width:100%;border-collapse:collapse;margin-top:10px; }
+th,td { border:1px solid #ddd;padding:6px; }
 th { background:#f0f0f0; }
-textarea { width:100%; min-height:40px; }
+textarea { width:100%;min-height:40px; }
 .hidden { display:none; }
-.done { background:#d4edda; text-decoration: line-through; }
-.row { display:flex; gap:10px; flex-wrap:wrap; }
-.row > div { flex:1; }
+.done { background:#d4edda;text-decoration:line-through; }
+.row { display:flex;gap:10px;flex-wrap:wrap; }
+.row>div { flex:1; }
 </style>
 </head>
 
@@ -79,6 +55,7 @@ textarea { width:100%; min-height:40px; }
 <div id="dashboard" class="card hidden">
   <h3>Dashboard</h3>
   <button class="btn" onclick="openTimetable()">Timetable</button>
+  <button class="btn-secondary" onclick="openWeekly()">Weekly Report</button>
 </div>
 
 <div id="timetableScreen" class="card hidden">
@@ -112,28 +89,36 @@ textarea { width:100%; min-height:40px; }
   <button class="btn" onclick="back()">Back</button>
 </div>
 
+<div id="weeklyScreen" class="card hidden">
+  <h3>Weekly Report (Mon–Sun)</h3>
+  <div id="weeklySummary"></div>
+  <button class="btn" onclick="back()">Back</button>
+</div>
+
 <script>
 const API = "https://my-time-backend.onrender.com";
 
 loginBtn.onclick = async () => {
-  const res = await fetch(API+"/login",{
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
+  const r = await fetch(API+"/login",{
+    method:"POST",headers:{ "Content-Type":"application/json" },
     body:JSON.stringify({ password: passwordInput.value })
   });
-  if(!res.ok) return alert("Wrong password");
+  if(!r.ok) return alert("Wrong password");
   loginBox.classList.add("hidden");
   dashboard.classList.remove("hidden");
 };
+
+function back(){
+  timetableScreen.classList.add("hidden");
+  weeklyScreen.classList.add("hidden");
+  dashboard.classList.remove("hidden");
+}
 
 function openTimetable(){
   dashboard.classList.add("hidden");
   timetableScreen.classList.remove("hidden");
 
-  const today = new Date().toISOString().split("T")[0];
-  ttDate.value = today;
-
-  // defaults (persisted)
+  ttDate.value = new Date().toISOString().split("T")[0];
   startTime.value = localStorage.startTime || "05:00";
   endTime.value = localStorage.endTime || "23:59";
   gapSelect.value = localStorage.gap || "60";
@@ -141,36 +126,34 @@ function openTimetable(){
   buildAndLoad();
 }
 
-ttDate.onchange = buildAndLoad;
-gapSelect.onchange = savePrefs;
-startTime.onchange = savePrefs;
-endTime.onchange = savePrefs;
+function openWeekly(){
+  dashboard.classList.add("hidden");
+  weeklyScreen.classList.remove("hidden");
+  loadWeekly();
+}
 
 function savePrefs(){
-  localStorage.startTime = startTime.value;
-  localStorage.endTime = endTime.value;
-  localStorage.gap = gapSelect.value;
+  localStorage.startTime=startTime.value;
+  localStorage.endTime=endTime.value;
+  localStorage.gap=gapSelect.value;
 }
+startTime.onchange=endTime.onchange=gapSelect.onchange=savePrefs;
 
 function toMin(t){ const [h,m]=t.split(":").map(Number); return h*60+m; }
 function fmt(m){
-  let h=Math.floor(m/60), mm=m%60;
+  let h=Math.floor(m/60),mm=m%60;
   let ap=h>=12?"PM":"AM"; h=h%12||12;
   return `${h}:${String(mm).padStart(2,"0")} ${ap}`;
 }
 
 async function buildAndLoad(){
-  const s = toMin(startTime.value);
-  const e = toMin(endTime.value);
-  const g = parseInt(gapSelect.value);
+  const s=toMin(startTime.value), e=toMin(endTime.value), g=parseInt(gapSelect.value);
+  const tb=ttTable.querySelector("tbody"); tb.innerHTML="";
 
-  const tbody = ttTable.querySelector("tbody");
-  tbody.innerHTML="";
-
-  for(let cur=s; cur<e; cur+=g){
+  for(let cur=s;cur<e;cur+=g){
     let nxt=Math.min(cur+g,e);
     let key=`${cur}-${nxt}`;
-    tbody.innerHTML+=`
+    tb.innerHTML+=`
       <tr>
         <td>${fmt(cur)} – ${fmt(nxt)}</td>
         <td>
@@ -180,47 +163,74 @@ async function buildAndLoad(){
       </tr>`;
   }
 
-  const res = await fetch(API+"/timetable?date="+ttDate.value);
-  const data = await res.json();
+  const r=await fetch(API+"/timetable?date="+ttDate.value);
+  const data=await r.json();
 
   document.querySelectorAll("textarea").forEach(t=>{
-    const f = data.find(b=>b.hour===t.dataset.key);
-    if(f) t.value=f.text;
+    const f=data.find(b=>b.hour===t.dataset.key);
+    if(f){
+      t.value=f.text;
+      if(f.completed) t.parentElement.classList.add("done");
+    }
   });
 }
 
 async function saveTimetable(){
   const blocks=[];
   document.querySelectorAll("textarea").forEach(t=>{
-    blocks.push({ hour:t.dataset.key, text:t.value });
+    blocks.push({
+      hour:t.dataset.key,
+      text:t.value,
+      completed:t.parentElement.classList.contains("done")
+    });
   });
 
   await fetch(API+"/timetable",{
     method:"POST",
     headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({ date: ttDate.value, blocks })
+    body:JSON.stringify({ date:ttDate.value, blocks })
   });
-
   alert("Saved");
 }
 
 async function copyDay(offset){
-  const d = new Date(ttDate.value);
+  const d=new Date(ttDate.value);
   d.setDate(d.getDate()+offset);
-  const src = d.toISOString().split("T")[0];
+  const src=d.toISOString().split("T")[0];
 
-  const res = await fetch(API+"/timetable?date="+src);
-  const data = await res.json();
+  const r=await fetch(API+"/timetable?date="+src);
+  const data=await r.json();
 
   document.querySelectorAll("textarea").forEach(t=>{
-    const f = data.find(b=>b.hour===t.dataset.key);
-    t.value = f ? f.text : "";
+    const f=data.find(b=>b.hour===t.dataset.key);
+    t.value=f?f.text:"";
+    t.parentElement.classList.toggle("done",f?.completed);
   });
 }
 
-function back(){
-  timetableScreen.classList.add("hidden");
-  dashboard.classList.remove("hidden");
+async function loadWeekly(){
+  const today=new Date();
+  const day=today.getDay();
+  const diff=(day===0?6:day-1);
+  const monday=new Date(today); monday.setDate(today.getDate()-diff);
+  const sunday=new Date(monday); sunday.setDate(monday.getDate()+6);
+
+  const s=monday.toISOString().split("T")[0];
+  const e=sunday.toISOString().split("T")[0];
+
+  const r=await fetch(API+`/weekly-report?start=${s}&end=${e}`);
+  const data=await r.json();
+
+  const total=data.length;
+  const done=data.filter(b=>b.completed).length;
+  const pct=total?Math.round(done*100/total):0;
+
+  weeklySummary.innerHTML=`
+    <p><b>Week:</b> ${s} → ${e}</p>
+    <p><b>Total Blocks:</b> ${total}</p>
+    <p><b>Completed:</b> ${done}</p>
+    <p><b>Completion:</b> ${pct}%</p>
+  `;
 }
 </script>
 
