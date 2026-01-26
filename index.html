@@ -19,9 +19,7 @@
       box-shadow: 0 10px 25px rgba(0,0,0,0.15);
       margin-bottom: 20px;
     }
-    h2, h3 {
-      text-align: center;
-    }
+    h2, h3 { text-align: center; }
     input, select, button, textarea {
       padding: 8px;
       font-size: 14px;
@@ -54,13 +52,10 @@
       padding: 6px;
       vertical-align: top;
     }
-    th {
-      background: #f0f0f0;
-    }
+    th { background: #f0f0f0; }
     textarea {
       width: 100%;
       min-height: 40px;
-      resize: vertical;
     }
     .hidden { display:none; }
     .done {
@@ -75,7 +70,7 @@
 <!-- LOGIN -->
 <div id="loginBox" class="card">
   <h2>My Time</h2>
-  <input id="password" type="password" placeholder="Enter password" style="width:100%;">
+  <input id="passwordInput" type="password" placeholder="Enter password" style="width:100%;">
   <button class="btn" id="loginBtn">Login</button>
 </div>
 
@@ -118,18 +113,24 @@
 <script>
 const API = "https://my-time-backend.onrender.com";
 
+/* LOGIN — FIXED */
 loginBtn.onclick = () => {
-  fetch(API+"/login",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({password})
-  }).then(r=>{
-    if(!r.ok) throw "Wrong password";
+  const pwd = document.getElementById("passwordInput").value;
+
+  fetch(API + "/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password: pwd })
+  })
+  .then(r => {
+    if (!r.ok) throw "Wrong password";
     return r.json();
-  }).then(()=>{
+  })
+  .then(() => {
     loginBox.classList.add("hidden");
     dashboard.classList.remove("hidden");
-  }).catch(e=>alert(e));
+  })
+  .catch(e => alert(e));
 };
 
 function openTimetable(){
@@ -174,8 +175,7 @@ function buildTable(){
 }
 
 function markDone(btn){
-  const td = btn.parentElement;
-  td.classList.toggle("done");
+  btn.parentElement.classList.toggle("done");
 }
 
 function saveTimetable(){
@@ -188,15 +188,15 @@ function saveTimetable(){
     });
   });
 
-  fetch(API+"/timetable",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({date:ttDate.value,blocks})
+  fetch(API + "/timetable", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ date: ttDate.value, blocks })
   }).then(()=>alert("Timetable saved"));
 }
 
 function loadTimetable(){
-  fetch(API+"/timetable?date="+ttDate.value)
+  fetch(API + "/timetable?date=" + ttDate.value)
     .then(r=>r.json())
     .then(data=>{
       document.querySelectorAll("textarea").forEach(t=>{
