@@ -39,10 +39,18 @@
 <div id="timetableScreen" style="display:none;max-width:400px;margin:auto;background:#fff;padding:20px;border-radius:8px;">
   <h3>Timetable</h3>
 
+  <!-- DATE FOR TIMETABLE -->
+  <input type="date" id="timetableDate" style="width:100%;padding:8px;margin-bottom:10px;">
+
   <div id="timeBlocks"></div>
 
-  <button onclick="saveTimetable()" style="width:100%;padding:10px;margin-top:10px;">Save Timetable</button>
-  <button onclick="backToDashboardFromTimetable()" style="width:100%;padding:10px;margin-top:10px;">Back</button>
+  <button onclick="saveTimetable()" style="width:100%;padding:10px;margin-top:10px;">
+    Save Timetable
+  </button>
+
+  <button onclick="backToDashboardFromTimetable()" style="width:100%;padding:10px;margin-top:10px;">
+    Back
+  </button>
 </div>
 
 <script>
@@ -84,7 +92,7 @@ function backToDashboard() {
 function openTimetable() {
   dashboard.style.display = "none";
   timetableScreen.style.display = "block";
-  taskDate.valueAsDate = new Date();
+  timetableDate.valueAsDate = new Date();
   loadTimetable();
 }
 
@@ -135,8 +143,10 @@ function completeTask(id) {
 }
 
 /* TIMETABLE */
+timetableDate.onchange = loadTimetable;
+
 function loadTimetable() {
-  fetch(API + "/timetable?date=" + taskDate.value)
+  fetch(API + "/timetable?date=" + timetableDate.value)
     .then(r => r.json())
     .then(data => {
       timeBlocks.innerHTML = "";
@@ -146,7 +156,8 @@ function loadTimetable() {
         let div = document.createElement("div");
         div.innerHTML = `
           <strong>${hour}</strong>
-          <input data-hour="${hour}" value="${saved ? saved.text : ""}"
+          <input data-hour="${hour}"
+            value="${saved ? saved.text : ""}"
             style="width:100%;padding:6px;margin-bottom:6px;">
         `;
         timeBlocks.appendChild(div);
@@ -160,7 +171,7 @@ function saveTimetable() {
     blocks.push({
       hour: inp.dataset.hour,
       text: inp.value,
-      date: taskDate.value
+      date: timetableDate.value
     });
   });
 
@@ -168,7 +179,7 @@ function saveTimetable() {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      date: taskDate.value,
+      date: timetableDate.value,
       blocks
     })
   }).then(() => alert("Timetable saved"));
