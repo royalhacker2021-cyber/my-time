@@ -11,7 +11,7 @@
       padding: 20px;
     }
     .card {
-      max-width: 800px;
+      max-width: 900px;
       margin: auto;
       background: #fff;
       padding: 20px;
@@ -75,9 +75,7 @@
       gap: 10px;
       flex-wrap: wrap;
     }
-    .row > div {
-      flex: 1;
-    }
+    .row > div { flex: 1; }
   </style>
 </head>
 
@@ -106,11 +104,11 @@
       <input type="date" id="ttDate">
     </div>
     <div>
-      <label>Start Time</label>
+      <label>Start</label>
       <input type="time" id="startTime" value="05:00">
     </div>
     <div>
-      <label>End Time</label>
+      <label>End</label>
       <input type="time" id="endTime" value="24:00">
     </div>
     <div>
@@ -131,8 +129,8 @@
   <table id="ttTable">
     <thead>
       <tr>
-        <th style="width:200px;">Time Range</th>
-        <th>Mission / Task</th>
+        <th style="width:220px;">Time Range</th>
+        <th>Mission</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -147,18 +145,14 @@ const API = "https://my-time-backend.onrender.com";
 
 /* LOGIN */
 loginBtn.onclick = () => {
-  const pwd = passwordInput.value;
-  fetch(API + "/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ password: pwd })
+  fetch(API+"/login",{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ password: passwordInput.value })
   })
-  .then(r => { if(!r.ok) throw "Wrong password"; return r.json(); })
-  .then(() => {
-    loginBox.classList.add("hidden");
-    dashboard.classList.remove("hidden");
-  })
-  .catch(e => alert(e));
+  .then(r=>{ if(!r.ok) throw "Wrong password"; return r.json(); })
+  .then(()=>{ loginBox.classList.add("hidden"); dashboard.classList.remove("hidden"); })
+  .catch(e=>alert(e));
 };
 
 function openTimetable(){
@@ -167,60 +161,43 @@ function openTimetable(){
   ttDate.valueAsDate = new Date();
 }
 
-function back(){
-  timetableScreen.classList.add("hidden");
-  dashboard.classList.remove("hidden");
-}
-
 /* TIME UTILS */
-function toMinutes(t){
-  const [h,m] = t.split(":").map(Number);
-  return h*60 + m;
-}
-function formatTime(min){
-  let h = Math.floor(min/60);
-  let m = min%60;
-  let ampm = h>=12 ? "PM":"AM";
-  h = h%12; if(h===0) h=12;
-  return `${h}:${String(m).padStart(2,"0")} ${ampm}`;
+function toMin(t){ const [h,m]=t.split(":").map(Number); return h*60+m; }
+function fmt(min){
+  let h=Math.floor(min/60), m=min%60;
+  let ap=h>=12?"PM":"AM"; h=h%12||12;
+  return `${h}:${String(m).padStart(2,"0")} ${ap}`;
 }
 
-/* BUILD TABLE */
+/* BUILD */
 function buildTable(){
-  const start = toMinutes(startTime.value);
-  const end = toMinutes(endTime.value === "24:00" ? "24:00" : endTime.value);
-  const gap = parseInt(gapSelect.value);
-
-  const tbody = ttTable.querySelector("tbody");
-  tbody.innerHTML = "";
-
-  let cur = start;
-  while(cur < end){
-    const next = Math.min(cur + gap, end);
-    const label = `${formatTime(cur)} – ${formatTime(next)}`;
-
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${label}</td>
+  const s=toMin(startTime.value), e=toMin(endTime.value), g=parseInt(gapSelect.value);
+  const tb=ttTable.querySelector("tbody");
+  tb.innerHTML="";
+  for(let cur=s;cur<e;cur+=g){
+    let nxt=Math.min(cur+g,e);
+    let key=`${cur}-${nxt}`;
+    let tr=document.createElement("tr");
+    tr.innerHTML=`
+      <td>${fmt(cur)} – ${fmt(nxt)}</td>
       <td>
-        <textarea data-time="${label}"></textarea>
-        <button class="btn-green" onclick="markDone(this)">✔</button>
+        <textarea data-key="${key}"></textarea>
+        <button class="btn-green" onclick="this.parentElement.classList.toggle('done')">✔</button>
       </td>`;
-    tbody.appendChild(tr);
-    cur = next;
+    tb.appendChild(tr);
   }
   loadTimetable(ttDate.value);
 }
 
-function markDone(btn){
-  btn.parentElement.classList.toggle("done");
-}
-
-/* SAVE / LOAD */
+/* SAVE */
 function saveTimetable(){
-  const blocks = [];
+  const blocks=[];
   document.querySelectorAll("textarea").forEach(t=>{
-    blocks.push({ hour:t.dataset.time, text:t.value, date:ttDate.value });
+    blocks.push({
+      hour:t.dataset.key,
+      text:t.value,
+      date:ttDate.value
+    });
   });
   fetch(API+"/timetable",{
     method:"POST",
@@ -229,33 +206,37 @@ function saveTimetable(){
   }).then(()=>alert("Timetable saved"));
 }
 
-function loadTimetable(date){
-  fetch(API+"/timetable?date="+date)
+/* LOAD */
+function loadTimetable(d){
+  fetch(API+"/timetable?date="+d)
     .then(r=>r.json())
     .then(data=>{
       document.querySelectorAll("textarea").forEach(t=>{
-        const f = data.find(b=>b.hour===t.dataset.time);
-        if(f) t.value = f.text;
+        let f=data.find(b=>b.hour===t.dataset.key);
+        if(f) t.value=f.text;
       });
     });
 }
 
-/* COPY DAY */
+/* COPY */
 function copyDay(offset){
-  const base = new Date(ttDate.value);
-  base.setDate(base.getDate()+offset);
-  const src = base.toISOString().split("T")[0];
-
-  if(!confirm("This will overwrite current timetable. Continue?")) return;
-
+  let d=new Date(ttDate.value);
+  d.setDate(d.getDate()+offset);
+  let src=d.toISOString().split("T")[0];
+  if(!confirm("Overwrite current timetable?")) return;
   fetch(API+"/timetable?date="+src)
     .then(r=>r.json())
     .then(data=>{
       document.querySelectorAll("textarea").forEach(t=>{
-        const f = data.find(b=>b.hour===t.dataset.time);
-        t.value = f ? f.text : "";
+        let f=data.find(b=>b.hour===t.dataset.key);
+        t.value=f?f.text:"";
       });
     });
+}
+
+function back(){
+  timetableScreen.classList.add("hidden");
+  dashboard.classList.remove("hidden");
 }
 </script>
 
