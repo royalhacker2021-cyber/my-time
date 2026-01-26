@@ -26,11 +26,12 @@ const TaskSchema = new mongoose.Schema({
 });
 const Task = mongoose.model("Task", TaskSchema);
 
-// TIMETABLE (FINAL, CONSISTENT)
+// TIMETABLE (FINAL)
 const TimetableSchema = new mongoose.Schema({
   date: { type: String, index: true },
-  hour: String,   // "300-360"
-  text: String
+  hour: String,              // "300-360"
+  text: String,
+  completed: { type: Boolean, default: false }
 });
 const Timetable = mongoose.model("Timetable", TimetableSchema);
 
@@ -71,7 +72,7 @@ app.put("/tasks/:id", async (req, res) => {
 
 // ===== TIMETABLE APIs =====
 
-// GET timetable
+// Get timetable for a date
 app.get("/timetable", async (req, res) => {
   const { date } = req.query;
   if (!date) return res.json([]);
@@ -79,32 +80,39 @@ app.get("/timetable", async (req, res) => {
   res.json(data);
 });
 
-// SAVE timetable (overwrite per date)
+// Save timetable (overwrite per date)
 app.post("/timetable", async (req, res) => {
-  try {
-    const { date, blocks } = req.body;
-
-    if (!date || !Array.isArray(blocks)) {
-      return res.status(400).json({ error: "Invalid data" });
-    }
-
-    await Timetable.deleteMany({ date });
-
-    const clean = blocks.map(b => ({
-      date,
-      hour: b.hour,   // SAME NAME
-      text: b.text || ""
-    }));
-
-    if (clean.length) {
-      await Timetable.insertMany(clean);
-    }
-
-    res.json({ success: true });
-  } catch (err) {
-    console.error("Timetable error:", err);
-    res.status(500).json({ error: "Save failed" });
+  const { date, blocks } = req.body;
+  if (!date || !Array.isArray(blocks)) {
+    return res.status(400).json({ error: "Invalid data" });
   }
+
+  await Timetable.deleteMany({ date });
+
+  const clean = blocks.map(b => ({
+    date,
+    hour: b.hour,
+    text: b.text || "",
+    completed: !!b.completed
+  }));
+
+  if (clean.length) {
+    await Timetable.insertMany(clean);
+  }
+
+  res.json({ success: true });
+});
+
+// ===== WEEKLY REPORT (MONDAY–SUNDAY) =====
+app.get("/weekly-report", async (req, res) => {
+  const { start, end } = req.query;
+  if (!start || !end) return res.json([]);
+
+  const data = await Timetable.find({
+    date: { $gte: start, $lte: end }
+  });
+
+  res.json(data);
 });
 
 // ===== SERVER =====
