@@ -22,11 +22,19 @@
 </div>
 
 <div class="box" id="appBox" style="display:none">
-  <h2>Today's To-Do</h2>
+  <h3>📅 Select Date</h3>
+  <input type="date" id="datePicker" />
+
+  <h3>📝 Tasks</h3>
   <input id="taskInput" placeholder="New task">
   <button onclick="addTask()">Add</button>
+
   <ul id="tasks"></ul>
+
+  <button onclick="loadHistory()">📂 View Completed Tasks</button>
+  <ul id="history"></ul>
 </div>
+
 
 <script>
 const API = "https://my-time-backend.onrender.com";
@@ -40,38 +48,59 @@ function login() {
     if(r.ok){
       loginBox.style.display="none";
       appBox.style.display="block";
+      datePicker.valueAsDate = new Date();
       loadTasks();
     } else alert("Wrong password");
   })
 }
 
 function loadTasks(){
-  fetch(API+"/tasks")
+  fetch(API + "/tasks?date=" + datePicker.value)
     .then(r=>r.json())
     .then(data=>{
       tasks.innerHTML="";
       data.forEach(t=>{
         let li=document.createElement("li");
-        li.textContent=t.text;
-        li.onclick=()=>deleteTask(t._id);
+        li.innerHTML = `${t.text} <button onclick="completeTask('${t._id}')">✔</button>`;
         tasks.appendChild(li);
       })
     })
 }
 
+datePicker.onchange = loadTasks;
+
 function addTask(){
   fetch(API+"/tasks",{
     method:"POST",
     headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({ text:taskInput.value })
-  }).then(()=>{ taskInput.value=""; loadTasks(); })
+    body:JSON.stringify({
+      text: taskInput.value,
+      date: datePicker.value
+    })
+  }).then(()=>{
+    taskInput.value="";
+    loadTasks();
+  })
 }
 
-function deleteTask(id){
-  fetch(API+"/tasks/"+id,{ method:"PUT", body:"{}" })
-    .then(loadTasks)
+function completeTask(id){
+  fetch(API+"/tasks/"+id,{
+    method:"PUT",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ completed:true })
+  }).then(loadTasks)
 }
-</script>
 
-</body>
-</html>
+function loadHistory(){
+  fetch(API+"/history")
+    .then(r=>r.json())
+    .then(data=>{
+      history.innerHTML="";
+      data.forEach(t=>{
+        let li=document.createElement("li");
+        li.textContent = `${t.text} (${t.date})`;
+        history.appendChild(li);
+      })
+    })
+}
+
