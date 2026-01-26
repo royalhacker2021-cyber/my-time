@@ -109,7 +109,7 @@
     </div>
     <div>
       <label>End</label>
-      <input type="time" id="endTime" value="24:00">
+      <input type="time" id="endTime" value="23:59">
     </div>
     <div>
       <label>Gap</label>
@@ -122,7 +122,6 @@
   </div>
 
   <button class="btn" onclick="buildTable()">Build Timetable</button>
-
   <button class="btn-secondary" onclick="copyDay(-1)">Copy Yesterday</button>
   <button class="btn-secondary" onclick="copyDay(-7)">Copy Last Week</button>
 
@@ -159,10 +158,16 @@ function openTimetable(){
   dashboard.classList.add("hidden");
   timetableScreen.classList.remove("hidden");
   ttDate.valueAsDate = new Date();
+  buildTable();
 }
 
+ttDate.onchange = () => buildTable();
+
 /* TIME UTILS */
-function toMin(t){ const [h,m]=t.split(":").map(Number); return h*60+m; }
+function toMin(t){
+  const [h,m] = t.split(":").map(Number);
+  return h*60 + m;
+}
 function fmt(min){
   let h=Math.floor(min/60), m=min%60;
   let ap=h>=12?"PM":"AM"; h=h%12||12;
@@ -171,12 +176,17 @@ function fmt(min){
 
 /* BUILD */
 function buildTable(){
-  const s=toMin(startTime.value), e=toMin(endTime.value), g=parseInt(gapSelect.value);
-  const tb=ttTable.querySelector("tbody");
-  tb.innerHTML="";
-  for(let cur=s;cur<e;cur+=g){
+  const s = toMin(startTime.value);
+  const e = toMin(endTime.value);
+  const g = parseInt(gapSelect.value);
+
+  const tb = ttTable.querySelector("tbody");
+  tb.innerHTML = "";
+
+  for(let cur=s; cur<e; cur+=g){
     let nxt=Math.min(cur+g,e);
     let key=`${cur}-${nxt}`;
+
     let tr=document.createElement("tr");
     tr.innerHTML=`
       <td>${fmt(cur)} – ${fmt(nxt)}</td>
@@ -186,6 +196,7 @@ function buildTable(){
       </td>`;
     tb.appendChild(tr);
   }
+
   loadTimetable(ttDate.value);
 }
 
@@ -199,6 +210,7 @@ function saveTimetable(){
       date:ttDate.value
     });
   });
+
   fetch(API+"/timetable",{
     method:"POST",
     headers:{ "Content-Type":"application/json" },
@@ -212,8 +224,8 @@ function loadTimetable(d){
     .then(r=>r.json())
     .then(data=>{
       document.querySelectorAll("textarea").forEach(t=>{
-        let f=data.find(b=>b.hour===t.dataset.key);
-        if(f) t.value=f.text;
+        const f=data.find(b=>b.hour===t.dataset.key);
+        t.value = f ? f.text : "";
       });
     });
 }
@@ -224,11 +236,12 @@ function copyDay(offset){
   d.setDate(d.getDate()+offset);
   let src=d.toISOString().split("T")[0];
   if(!confirm("Overwrite current timetable?")) return;
+
   fetch(API+"/timetable?date="+src)
     .then(r=>r.json())
     .then(data=>{
       document.querySelectorAll("textarea").forEach(t=>{
-        let f=data.find(b=>b.hour===t.dataset.key);
+        const f=data.find(b=>b.hour===t.dataset.key);
         t.value=f?f.text:"";
       });
     });
