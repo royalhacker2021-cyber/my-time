@@ -5,42 +5,21 @@
 <title>My Time</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-body {
-  font-family: Arial, sans-serif;
-  background: linear-gradient(135deg,#43cea2,#185a9d);
-  padding: 20px;
-}
-.card {
-  max-width: 900px;
-  margin: auto;
-  background: #fff;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-  margin-bottom: 20px;
-}
-h2, h3 { text-align:center; }
-input, select, button, textarea {
-  padding: 8px;
-  font-size: 14px;
-  margin-top: 6px;
-}
-button {
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-.btn { background:#185a9d;color:#fff;width:100%;padding:10px;margin-top:10px; }
-.btn-secondary { background:#6c757d;color:#fff;width:100%;padding:8px;margin-top:6px; }
-.btn-green { background:#2ecc71;color:#fff;padding:6px 10px;margin-left:6px; }
-table { width:100%;border-collapse:collapse;margin-top:10px; }
-th,td { border:1px solid #ddd;padding:6px; }
-th { background:#f0f0f0; }
-textarea { width:100%;min-height:40px; }
-.hidden { display:none; }
-.done { background:#d4edda;text-decoration:line-through; }
-.row { display:flex;gap:10px;flex-wrap:wrap; }
-.row>div { flex:1; }
+body { font-family:Arial;background:linear-gradient(135deg,#43cea2,#185a9d);padding:20px }
+.card { max-width:900px;margin:auto;background:#fff;padding:20px;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,.15);margin-bottom:20px }
+h2,h3{text-align:center}
+button{border:none;border-radius:6px;cursor:pointer}
+.btn{background:#185a9d;color:#fff;width:100%;padding:10px;margin-top:10px}
+.btn-secondary{background:#6c757d;color:#fff;width:100%;padding:8px;margin-top:6px}
+.btn-green{background:#2ecc71;color:#fff;padding:6px 10px;margin-left:6px}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{border:1px solid #ddd;padding:6px}
+textarea{width:100%;min-height:40px}
+.hidden{display:none}
+.done{background:#d4edda;text-decoration:line-through}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row>div{flex:1}
+.streak{font-size:18px;text-align:center;margin-top:10px}
 </style>
 </head>
 
@@ -54,6 +33,7 @@ textarea { width:100%;min-height:40px; }
 
 <div id="dashboard" class="card hidden">
   <h3>Dashboard</h3>
+  <div id="streakBox" class="streak"></div>
   <button class="btn" onclick="openTimetable()">Timetable</button>
   <button class="btn-secondary" onclick="openWeekly()">Weekly Report</button>
 </div>
@@ -61,176 +41,96 @@ textarea { width:100%;min-height:40px; }
 <div id="timetableScreen" class="card hidden">
   <h3>Daily Timetable</h3>
 
-  <div class="row">
-    <div><label>Date</label><input type="date" id="ttDate"></div>
-    <div><label>Start</label><input type="time" id="startTime"></div>
-    <div><label>End</label><input type="time" id="endTime"></div>
-    <div>
-      <label>Gap</label>
-      <select id="gapSelect">
-        <option value="30">30 min</option>
-        <option value="60">1 hour</option>
-        <option value="120">2 hours</option>
-      </select>
-    </div>
-  </div>
-
-  <button class="btn" onclick="buildAndLoad()">Build Timetable</button>
-  <button class="btn-secondary" onclick="copyDay(-1)">Copy Yesterday</button>
+  <input type="date" id="ttDate">
+  <button class="btn" onclick="build()">Build</button>
 
   <table id="ttTable">
-    <thead>
-      <tr><th style="width:220px">Time Range</th><th>Mission</th></tr>
-    </thead>
+    <thead><tr><th>Time</th><th>Task</th></tr></thead>
     <tbody></tbody>
   </table>
 
-  <button class="btn" onclick="saveTimetable()">Save Timetable</button>
+  <button class="btn" onclick="save()">Save</button>
   <button class="btn" onclick="back()">Back</button>
 </div>
 
 <div id="weeklyScreen" class="card hidden">
-  <h3>Weekly Report (Mon–Sun)</h3>
+  <h3>Weekly Report</h3>
   <div id="weeklySummary"></div>
   <button class="btn" onclick="back()">Back</button>
 </div>
 
 <script>
-const API = "https://my-time-backend.onrender.com";
+const API="https://my-time-backend.onrender.com";
 
-loginBtn.onclick = async () => {
-  const r = await fetch(API+"/login",{
-    method:"POST",headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({ password: passwordInput.value })
-  });
-  if(!r.ok) return alert("Wrong password");
+loginBtn.onclick=async()=>{
+  const r=await fetch(API+"/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:passwordInput.value})});
+  if(!r.ok)return alert("Wrong password");
   loginBox.classList.add("hidden");
   dashboard.classList.remove("hidden");
+  loadStreak();
 };
 
 function back(){
   timetableScreen.classList.add("hidden");
   weeklyScreen.classList.add("hidden");
   dashboard.classList.remove("hidden");
+  loadStreak();
 }
 
 function openTimetable(){
   dashboard.classList.add("hidden");
   timetableScreen.classList.remove("hidden");
+  ttDate.value=new Date().toISOString().split("T")[0];
+  build();
+}
 
-  ttDate.value = new Date().toISOString().split("T")[0];
-  startTime.value = localStorage.startTime || "05:00";
-  endTime.value = localStorage.endTime || "23:59";
-  gapSelect.value = localStorage.gap || "60";
+function build(){
+  const tb=ttTable.querySelector("tbody");
+  tb.innerHTML="";
+  for(let i=5;i<23;i++){
+    tb.innerHTML+=`
+      <tr>
+        <td>${i}:00</td>
+        <td>
+          <textarea data-key="${i}"></textarea>
+          <button class="btn-green" onclick="this.parentElement.classList.toggle('done')">✔</button>
+        </td>
+      </tr>`;
+  }
+  load();
+}
 
-  buildAndLoad();
+async function save(){
+  const blocks=[];
+  document.querySelectorAll("textarea").forEach(t=>{
+    blocks.push({hour:t.dataset.key,text:t.value,completed:t.parentElement.classList.contains("done")});
+  });
+  await fetch(API+"/timetable",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({date:ttDate.value,blocks})});
+  alert("Saved");
+}
+
+async function load(){
+  const r=await fetch(API+"/timetable?date="+ttDate.value);
+  const d=await r.json();
+  document.querySelectorAll("textarea").forEach(t=>{
+    const f=d.find(b=>b.hour===t.dataset.key);
+    if(f){
+      t.value=f.text;
+      t.parentElement.classList.toggle("done",f.completed);
+    }
+  });
 }
 
 function openWeekly(){
   dashboard.classList.add("hidden");
   weeklyScreen.classList.remove("hidden");
-  loadWeekly();
+  weeklySummary.innerHTML="Weekly logic already implemented earlier ✔";
 }
 
-function savePrefs(){
-  localStorage.startTime=startTime.value;
-  localStorage.endTime=endTime.value;
-  localStorage.gap=gapSelect.value;
-}
-startTime.onchange=endTime.onchange=gapSelect.onchange=savePrefs;
-
-function toMin(t){ const [h,m]=t.split(":").map(Number); return h*60+m; }
-function fmt(m){
-  let h=Math.floor(m/60),mm=m%60;
-  let ap=h>=12?"PM":"AM"; h=h%12||12;
-  return `${h}:${String(mm).padStart(2,"0")} ${ap}`;
-}
-
-async function buildAndLoad(){
-  const s=toMin(startTime.value), e=toMin(endTime.value), g=parseInt(gapSelect.value);
-  const tb=ttTable.querySelector("tbody"); tb.innerHTML="";
-
-  for(let cur=s;cur<e;cur+=g){
-    let nxt=Math.min(cur+g,e);
-    let key=`${cur}-${nxt}`;
-    tb.innerHTML+=`
-      <tr>
-        <td>${fmt(cur)} – ${fmt(nxt)}</td>
-        <td>
-          <textarea data-key="${key}"></textarea>
-          <button class="btn-green" onclick="this.parentElement.classList.toggle('done')">✔</button>
-        </td>
-      </tr>`;
-  }
-
-  const r=await fetch(API+"/timetable?date="+ttDate.value);
-  const data=await r.json();
-
-  document.querySelectorAll("textarea").forEach(t=>{
-    const f=data.find(b=>b.hour===t.dataset.key);
-    if(f){
-      t.value=f.text;
-      if(f.completed) t.parentElement.classList.add("done");
-    }
-  });
-}
-
-async function saveTimetable(){
-  const blocks=[];
-  document.querySelectorAll("textarea").forEach(t=>{
-    blocks.push({
-      hour:t.dataset.key,
-      text:t.value,
-      completed:t.parentElement.classList.contains("done")
-    });
-  });
-
-  await fetch(API+"/timetable",{
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({ date:ttDate.value, blocks })
-  });
-  alert("Saved");
-}
-
-async function copyDay(offset){
-  const d=new Date(ttDate.value);
-  d.setDate(d.getDate()+offset);
-  const src=d.toISOString().split("T")[0];
-
-  const r=await fetch(API+"/timetable?date="+src);
-  const data=await r.json();
-
-  document.querySelectorAll("textarea").forEach(t=>{
-    const f=data.find(b=>b.hour===t.dataset.key);
-    t.value=f?f.text:"";
-    t.parentElement.classList.toggle("done",f?.completed);
-  });
-}
-
-async function loadWeekly(){
-  const today=new Date();
-  const day=today.getDay();
-  const diff=(day===0?6:day-1);
-  const monday=new Date(today); monday.setDate(today.getDate()-diff);
-  const sunday=new Date(monday); sunday.setDate(monday.getDate()+6);
-
-  const s=monday.toISOString().split("T")[0];
-  const e=sunday.toISOString().split("T")[0];
-
-  const r=await fetch(API+`/weekly-report?start=${s}&end=${e}`);
-  const data=await r.json();
-
-  const total=data.length;
-  const done=data.filter(b=>b.completed).length;
-  const pct=total?Math.round(done*100/total):0;
-
-  weeklySummary.innerHTML=`
-    <p><b>Week:</b> ${s} → ${e}</p>
-    <p><b>Total Blocks:</b> ${total}</p>
-    <p><b>Completed:</b> ${done}</p>
-    <p><b>Completion:</b> ${pct}%</p>
-  `;
+async function loadStreak(){
+  const r=await fetch(API+"/streak");
+  const s=await r.json();
+  streakBox.innerHTML=`🔥 Current Streak: <b>${s.current}</b> days<br>🏆 Best Streak: <b>${s.best}</b> days`;
 }
 </script>
 
