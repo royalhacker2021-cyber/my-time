@@ -65,6 +65,29 @@ textarea { width:100%; min-height:40px; }
 .done { background:#d4edda; text-decoration: line-through; }
 .row { display:flex; gap:10px; flex-wrap:wrap; }
 .row > div { flex:1; }
+
+/* NEW UI */
+.slider {
+  display:flex;
+  justify-content:space-between;
+  margin-top:10px;
+}
+.week {
+  display:flex;
+  justify-content:space-between;
+  margin-top:10px;
+}
+.week div {
+  flex:1;
+  text-align:center;
+  padding:6px;
+  cursor:pointer;
+  border-radius:6px;
+}
+.week .active {
+  background:#185a9d;
+  color:white;
+}
 </style>
 </head>
 
@@ -84,11 +107,20 @@ textarea { width:100%; min-height:40px; }
 <div id="timetableScreen" class="card hidden">
   <h3>Daily Timetable</h3>
 
+  <!-- CALENDAR (UNCHANGED) -->
+  <label>Date</label>
+  <input type="date" id="ttDate">
+
+  <!-- SLIDER -->
+  <div class="slider">
+    <button class="btn-secondary" onclick="shiftDate(-1)">◀ Previous</button>
+    <button class="btn-secondary" onclick="shiftDate(1)">Next ▶</button>
+  </div>
+
+  <!-- WEEK STRIP -->
+  <div class="week" id="weekStrip"></div>
+
   <div class="row">
-    <div>
-      <label>Date</label>
-      <input type="date" id="ttDate">
-    </div>
     <div>
       <label>Start</label>
       <input type="time" id="startTime">
@@ -153,18 +185,59 @@ function openTimetable(){
   endTime.value = localStorage.endTime || "23:59";
   gapSelect.value = localStorage.gap || "60";
 
+  syncWeekStrip();
   buildAndLoad();
 }
 
-ttDate.onchange = buildAndLoad;
-startTime.onchange = endTime.onchange = gapSelect.onchange = savePrefs;
+ttDate.onchange = () => {
+  syncWeekStrip();
+  buildAndLoad();
+};
 
-function savePrefs(){
+startTime.onchange = endTime.onchange = gapSelect.onchange = () => {
   localStorage.startTime = startTime.value;
   localStorage.endTime = endTime.value;
   localStorage.gap = gapSelect.value;
+};
+
+/* DATE HELPERS */
+function shiftDate(diff){
+  const d = new Date(ttDate.value);
+  d.setDate(d.getDate()+diff);
+  ttDate.value = d.toISOString().split("T")[0];
+  syncWeekStrip();
+  buildAndLoad();
 }
 
+function syncWeekStrip(){
+  const base = new Date(ttDate.value);
+  const day = base.getDay();
+  const diff = day===0 ? -6 : 1-day;
+  const monday = new Date(base);
+  monday.setDate(base.getDate()+diff);
+
+  const names=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+  weekStrip.innerHTML="";
+
+  for(let i=0;i<7;i++){
+    const d = new Date(monday);
+    d.setDate(monday.getDate()+i);
+    const iso = d.toISOString().split("T")[0];
+
+    const div = document.createElement("div");
+    div.textContent = names[i];
+    if(iso===ttDate.value) div.classList.add("active");
+
+    div.onclick = () => {
+      ttDate.value = iso;
+      syncWeekStrip();
+      buildAndLoad();
+    };
+    weekStrip.appendChild(div);
+  }
+}
+
+/* TIMETABLE LOGIC (UNCHANGED) */
 function toMin(t){ const [h,m]=t.split(":").map(Number); return h*60+m; }
 function fmt(m){
   let h=Math.floor(m/60), mm=m%60;
