@@ -18,10 +18,10 @@
 <!-- DASHBOARD -->
 <div id="dashboard" style="display:none;max-width:400px;margin:auto;background:#fff;padding:20px;border-radius:8px;">
   <h3>Dashboard</h3>
-  <button onclick="openTasks()">Go to Tasks</button>
+  <button onclick="openTasks()" style="width:100%;padding:10px;">Tasks</button>
 </div>
 
-<!-- TASKS SCREEN -->
+<!-- TASKS -->
 <div id="tasksScreen" style="display:none;max-width:400px;margin:auto;background:#fff;padding:20px;border-radius:8px;">
   <h3>Tasks</h3>
 
@@ -37,8 +37,6 @@
 </div>
 
 <script>
-alert("JS Loaded");
-
 const API = "https://my-time-backend.onrender.com";
 
 /* LOGIN */
@@ -61,7 +59,7 @@ function login() {
   .catch(err => alert(err.message));
 }
 
-/* NAVIGATION */
+/* NAV */
 function openTasks() {
   dashboard.style.display = "none";
   tasksScreen.style.display = "block";
@@ -84,7 +82,7 @@ function loadTasks() {
         let li = document.createElement("li");
         li.style.listStyle = "none";
         li.style.padding = "6px";
-        li.innerHTML = `${t.text} 
+        li.innerHTML = `${t.text}
           <button onclick="completeTask('${t._id}')">✔</button>`;
         taskList.appendChild(li);
       });
