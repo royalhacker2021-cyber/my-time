@@ -9,6 +9,7 @@ app.use(express.json());
 // ===== CONFIG =====
 const PASSWORD = "Dhir@123";
 const MONGO_URI = process.env.MONGO_URI;
+const STREAK_THRESHOLD = 0.6; // 60%
 
 // ===== DB =====
 mongoose.connect(MONGO_URI)
@@ -16,20 +17,9 @@ mongoose.connect(MONGO_URI)
   .catch(err => console.error(err));
 
 // ===== SCHEMAS =====
-
-// TASKS
-const TaskSchema = new mongoose.Schema({
-  text: String,
-  completed: { type: Boolean, default: false },
-  date: String,
-  createdAt: { type: Date, default: Date.now }
-});
-const Task = mongoose.model("Task", TaskSchema);
-
-// TIMETABLE (FINAL)
 const TimetableSchema = new mongoose.Schema({
   date: { type: String, index: true },
-  hour: String,              // "300-360"
+  hour: String,
   text: String,
   completed: { type: Boolean, default: false }
 });
@@ -37,55 +27,21 @@ const Timetable = mongoose.model("Timetable", TimetableSchema);
 
 // ===== AUTH =====
 app.post("/login", (req, res) => {
-  if (!req.body?.password) {
-    return res.status(400).json({ error: "Password missing" });
-  }
-  if (req.body.password === PASSWORD) {
-    res.json({ success: true });
-  } else {
-    res.status(401).json({ error: "Wrong password" });
-  }
+  if (!req.body?.password) return res.status(400).json({ error: "Password missing" });
+  if (req.body.password === PASSWORD) return res.json({ success: true });
+  res.status(401).json({ error: "Wrong password" });
 });
 
-// ===== TASK APIs =====
-app.get("/tasks", async (req, res) => {
-  const { date } = req.query;
-  const tasks = await Task.find({ date, completed: false });
-  res.json(tasks);
-});
-
-app.get("/history", async (req, res) => {
-  const tasks = await Task.find({ completed: true }).sort({ createdAt: -1 });
-  res.json(tasks);
-});
-
-app.post("/tasks", async (req, res) => {
-  const task = new Task(req.body);
-  await task.save();
-  res.json(task);
-});
-
-app.put("/tasks/:id", async (req, res) => {
-  await Task.findByIdAndUpdate(req.params.id, req.body);
-  res.json({ success: true });
-});
-
-// ===== TIMETABLE APIs =====
-
-// Get timetable for a date
+// ===== TIMETABLE =====
 app.get("/timetable", async (req, res) => {
   const { date } = req.query;
-  if (!date) return res.json([]);
   const data = await Timetable.find({ date });
   res.json(data);
 });
 
-// Save timetable (overwrite per date)
 app.post("/timetable", async (req, res) => {
   const { date, blocks } = req.body;
-  if (!date || !Array.isArray(blocks)) {
-    return res.status(400).json({ error: "Invalid data" });
-  }
+  if (!date || !Array.isArray(blocks)) return res.status(400).json({ error: "Invalid data" });
 
   await Timetable.deleteMany({ date });
 
@@ -96,27 +52,47 @@ app.post("/timetable", async (req, res) => {
     completed: !!b.completed
   }));
 
-  if (clean.length) {
-    await Timetable.insertMany(clean);
-  }
-
+  if (clean.length) await Timetable.insertMany(clean);
   res.json({ success: true });
 });
 
-// ===== WEEKLY REPORT (MONDAY–SUNDAY) =====
+// ===== WEEKLY =====
 app.get("/weekly-report", async (req, res) => {
   const { start, end } = req.query;
-  if (!start || !end) return res.json([]);
+  const data = await Timetable.find({ date: { $gte: start, $lte: end } });
+  res.json(data);
+});
 
-  const data = await Timetable.find({
-    date: { $gte: start, $lte: end }
+// ===== 🔥 STREAK API =====
+app.get("/streak", async (req, res) => {
+  const all = await Timetable.find().sort({ date: 1 });
+
+  const byDate = {};
+  all.forEach(b => {
+    if (!byDate[b.date]) byDate[b.date] = [];
+    byDate[b.date].push(b);
   });
 
-  res.json(data);
+  const dates = Object.keys(byDate).sort();
+  let current = 0;
+  let best = 0;
+
+  for (let i = 0; i < dates.length; i++) {
+    const blocks = byDate[dates[i]];
+    const total = blocks.length;
+    const done = blocks.filter(b => b.completed).length;
+
+    if (total > 0 && done / total >= STREAK_THRESHOLD) {
+      current++;
+      best = Math.max(best, current);
+    } else {
+      current = 0;
+    }
+  }
+
+  res.json({ current, best });
 });
 
 // ===== SERVER =====
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () =>
-  console.log("Server running on port", PORT)
-);
+app.listen(PORT, () => console.log("Server running on", PORT));
