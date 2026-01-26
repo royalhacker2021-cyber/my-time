@@ -28,12 +28,19 @@ const Task = mongoose.model("Task", TaskSchema);
 
 // ===== AUTH =====
 app.post("/login", (req, res) => {
+  console.log("Login attempt:", req.body);
+
+  if (!req.body || !req.body.password) {
+    return res.status(400).json({ error: "Password missing" });
+  }
+
   if (req.body.password === PASSWORD) {
-    res.json({ success: true });
+    return res.json({ success: true });
   } else {
-    res.status(401).json({ success: false });
+    return res.status(401).json({ error: "Wrong password" });
   }
 });
+
 
 // ===== API =====
 app.get("/tasks", async (req, res) => {
