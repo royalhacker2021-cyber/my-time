@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My Time</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: Arial; background:#f6f7f9; padding:20px; }
+    .box { max-width:400px; margin:auto; background:#fff; padding:20px; border-radius:8px; }
+    h2 { text-align:center; }
+    input, button { width:100%; padding:10px; margin-top:10px; }
+    ul { padding:0; }
+    li { list-style:none; padding:8px; border-bottom:1px solid #ddd; }
+    button { background:#000; color:#fff; border:none; }
+  </style>
+</head>
+<body>
+
+<div class="box" id="loginBox">
+  <h2>My Time</h2>
+  <input type="password" id="password" placeholder="Enter password">
+  <button onclick="login()">Login</button>
+</div>
+
+<div class="box" id="appBox" style="display:none">
+  <h2>Today's To-Do</h2>
+  <input id="taskInput" placeholder="New task">
+  <button onclick="addTask()">Add</button>
+  <ul id="tasks"></ul>
+</div>
+
+<script>
+const API = "https://my-time-backend.onrender.com";
+
+function login() {
+  fetch(API + "/login", {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ password:password.value })
+  }).then(r=>{
+    if(r.ok){
+      loginBox.style.display="none";
+      appBox.style.display="block";
+      loadTasks();
+    } else alert("Wrong password");
+  })
+}
+
+function loadTasks(){
+  fetch(API+"/tasks")
+    .then(r=>r.json())
+    .then(data=>{
+      tasks.innerHTML="";
+      data.forEach(t=>{
+        let li=document.createElement("li");
+        li.textContent=t.text;
+        li.onclick=()=>deleteTask(t._id);
+        tasks.appendChild(li);
+      })
+    })
+}
+
+function addTask(){
+  fetch(API+"/tasks",{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ text:taskInput.value })
+  }).then(()=>{ taskInput.value=""; loadTasks(); })
+}
+
+function deleteTask(id){
+  fetch(API+"/tasks/"+id,{ method:"PUT", body:"{}" })
+    .then(loadTasks)
+}
+</script>
+
+</body>
+</html>
