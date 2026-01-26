@@ -4,88 +4,135 @@
 <meta charset="UTF-8">
 <title>My Time</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-body {
-  font-family: Arial, sans-serif;
-  background: linear-gradient(135deg,#43cea2,#185a9d);
-  padding: 20px;
-}
-.card {
-  max-width: 900px;
-  margin: auto;
-  background: #fff;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-  margin-bottom: 20px;
-}
-h2, h3 { text-align:center; }
-input, select, button, textarea {
-  padding: 8px;
-  font-size: 14px;
-  margin-top: 6px;
-}
-button {
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-.btn {
-  background: #185a9d;
-  color: #fff;
-  width: 100%;
-  padding: 10px;
-  margin-top: 10px;
-}
-.btn-secondary {
-  background: #6c757d;
-  color: #fff;
-  width: 100%;
-  padding: 8px;
-  margin-top: 6px;
-}
-.btn-green {
-  background: #2ecc71;
-  color: #fff;
-  padding: 6px 10px;
-  margin-left: 6px;
-}
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 10px;
-}
-th, td {
-  border: 1px solid #ddd;
-  padding: 6px;
-}
-th { background:#f0f0f0; }
-textarea { width:100%; min-height:40px; }
-.hidden { display:none; }
-.done { background:#d4edda; text-decoration: line-through; }
-.row { display:flex; gap:10px; flex-wrap:wrap; }
-.row > div { flex:1; }
 
-/* NEW UI */
-.slider {
-  display:flex;
-  justify-content:space-between;
+<style>
+:root{
+  --primary:#6a5acd;
+  --secondary:#00c9a7;
+  --bg:linear-gradient(135deg,#667eea,#764ba2);
+  --card:rgba(255,255,255,0.95);
+  --muted:#6b7280;
+}
+
+body{
+  font-family:"Segoe UI",system-ui,sans-serif;
+  background:var(--bg);
+  padding:20px;
+}
+
+.card{
+  max-width:900px;
+  margin:auto;
+  background:var(--card);
+  padding:24px;
+  border-radius:18px;
+  box-shadow:0 20px 40px rgba(0,0,0,.18);
+  margin-bottom:24px;
+}
+
+h2,h3{text-align:center;margin-bottom:12px}
+
+label{font-size:13px;color:var(--muted)}
+
+input,select,textarea{
+  width:100%;
+  padding:10px;
+  font-size:14px;
+  border-radius:10px;
+  border:1px solid #ddd;
+  margin-top:6px;
+}
+
+textarea{resize:vertical}
+
+button{
+  border:none;
+  border-radius:12px;
+  cursor:pointer;
+  font-size:14px;
+  transition:.15s;
+}
+
+button:hover{
+  transform:translateY(-1px);
+  box-shadow:0 8px 18px rgba(0,0,0,.15);
+}
+
+.btn{
+  background:var(--primary);
+  color:white;
+  padding:12px;
+  width:100%;
+  margin-top:14px;
+}
+
+.btn-secondary{
+  background:#f1f5f9;
+  padding:10px;
+  width:100%;
   margin-top:10px;
 }
-.week {
-  display:flex;
-  justify-content:space-between;
-  margin-top:10px;
+
+.btn-green{
+  background:var(--secondary);
+  color:white;
+  padding:6px 12px;
+  margin-left:8px;
 }
-.week div {
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:16px;
+}
+
+th{
+  background:#f8fafc;
+  padding:10px;
+  font-size:13px;
+}
+
+td{
+  border-top:1px solid #eee;
+  padding:10px;
+}
+
+.done{
+  background:rgba(0,201,167,.15);
+  border-radius:10px;
+}
+
+.hidden{display:none}
+
+.row{
+  display:flex;
+  gap:14px;
+  flex-wrap:wrap;
+}
+.row>div{flex:1}
+
+.slider{
+  display:flex;
+  gap:10px;
+  margin-top:14px;
+}
+
+.week{
+  display:flex;
+  gap:8px;
+  margin-top:14px;
+}
+.week div{
   flex:1;
   text-align:center;
-  padding:6px;
+  padding:8px;
+  border-radius:10px;
+  background:#f1f5f9;
   cursor:pointer;
-  border-radius:6px;
+  font-size:13px;
 }
-.week .active {
-  background:#185a9d;
+.week .active{
+  background:var(--primary);
   color:white;
 }
 </style>
@@ -107,28 +154,19 @@ textarea { width:100%; min-height:40px; }
 <div id="timetableScreen" class="card hidden">
   <h3>Daily Timetable</h3>
 
-  <!-- CALENDAR (UNCHANGED) -->
   <label>Date</label>
   <input type="date" id="ttDate">
 
-  <!-- SLIDER -->
   <div class="slider">
     <button class="btn-secondary" onclick="shiftDate(-1)">◀ Previous</button>
     <button class="btn-secondary" onclick="shiftDate(1)">Next ▶</button>
   </div>
 
-  <!-- WEEK STRIP -->
   <div class="week" id="weekStrip"></div>
 
   <div class="row">
-    <div>
-      <label>Start</label>
-      <input type="time" id="startTime">
-    </div>
-    <div>
-      <label>End</label>
-      <input type="time" id="endTime">
-    </div>
+    <div><label>Start</label><input type="time" id="startTime"></div>
+    <div><label>End</label><input type="time" id="endTime"></div>
     <div>
       <label>Gap</label>
       <select id="gapSelect">
@@ -144,10 +182,7 @@ textarea { width:100%; min-height:40px; }
 
   <table id="ttTable">
     <thead>
-      <tr>
-        <th style="width:220px;">Time Range</th>
-        <th>Mission</th>
-      </tr>
+      <tr><th>Time Range</th><th>Mission</th></tr>
     </thead>
     <tbody></tbody>
   </table>
@@ -157,16 +192,16 @@ textarea { width:100%; min-height:40px; }
 </div>
 
 <script>
-const API = "https://my-time-backend.onrender.com";
+const API="https://my-time-backend.onrender.com";
 
 /* LOGIN */
-loginBtn.onclick = async () => {
-  const r = await fetch(API+"/login",{
+loginBtn.onclick=async()=>{
+  const r=await fetch(API+"/login",{
     method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({ password: passwordInput.value })
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({password:passwordInput.value})
   });
-  if(!r.ok) return alert("Wrong password");
+  if(!r.ok)return alert("Wrong password");
   loginBox.classList.add("hidden");
   dashboard.classList.remove("hidden");
 };
@@ -180,56 +215,56 @@ function openTimetable(){
   dashboard.classList.add("hidden");
   timetableScreen.classList.remove("hidden");
 
-  ttDate.value = new Date().toISOString().split("T")[0];
-  startTime.value = localStorage.startTime || "05:00";
-  endTime.value = localStorage.endTime || "23:59";
-  gapSelect.value = localStorage.gap || "60";
+  ttDate.value=new Date().toISOString().split("T")[0];
+  startTime.value=localStorage.startTime||"05:00";
+  endTime.value=localStorage.endTime||"23:59";
+  gapSelect.value=localStorage.gap||"60";
 
   syncWeekStrip();
   buildAndLoad();
 }
 
-ttDate.onchange = () => {
+ttDate.onchange=()=>{
   syncWeekStrip();
   buildAndLoad();
 };
 
-startTime.onchange = endTime.onchange = gapSelect.onchange = () => {
-  localStorage.startTime = startTime.value;
-  localStorage.endTime = endTime.value;
-  localStorage.gap = gapSelect.value;
+startTime.onchange=endTime.onchange=gapSelect.onchange=()=>{
+  localStorage.startTime=startTime.value;
+  localStorage.endTime=endTime.value;
+  localStorage.gap=gapSelect.value;
 };
 
-/* DATE HELPERS */
-function shiftDate(diff){
-  const d = new Date(ttDate.value);
-  d.setDate(d.getDate()+diff);
-  ttDate.value = d.toISOString().split("T")[0];
+/* DATE CONTROLS */
+function shiftDate(d){
+  const x=new Date(ttDate.value);
+  x.setDate(x.getDate()+d);
+  ttDate.value=x.toISOString().split("T")[0];
   syncWeekStrip();
   buildAndLoad();
 }
 
 function syncWeekStrip(){
-  const base = new Date(ttDate.value);
-  const day = base.getDay();
-  const diff = day===0 ? -6 : 1-day;
-  const monday = new Date(base);
+  const base=new Date(ttDate.value);
+  const day=base.getDay();
+  const diff=day===0?-6:1-day;
+  const monday=new Date(base);
   monday.setDate(base.getDate()+diff);
 
   const names=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
   weekStrip.innerHTML="";
 
   for(let i=0;i<7;i++){
-    const d = new Date(monday);
+    const d=new Date(monday);
     d.setDate(monday.getDate()+i);
-    const iso = d.toISOString().split("T")[0];
+    const iso=d.toISOString().split("T")[0];
 
-    const div = document.createElement("div");
-    div.textContent = names[i];
-    if(iso===ttDate.value) div.classList.add("active");
+    const div=document.createElement("div");
+    div.textContent=names[i];
+    if(iso===ttDate.value)div.classList.add("active");
 
-    div.onclick = () => {
-      ttDate.value = iso;
+    div.onclick=()=>{
+      ttDate.value=iso;
       syncWeekStrip();
       buildAndLoad();
     };
@@ -238,26 +273,26 @@ function syncWeekStrip(){
 }
 
 /* TIMETABLE LOGIC (UNCHANGED) */
-function toMin(t){ const [h,m]=t.split(":").map(Number); return h*60+m; }
+function toMin(t){const[a,b]=t.split(":").map(Number);return a*60+b}
 function fmt(m){
-  let h=Math.floor(m/60), mm=m%60;
-  let ap=h>=12?"PM":"AM"; h=h%12||12;
+  let h=Math.floor(m/60),mm=m%60;
+  let ap=h>=12?"PM":"AM";h=h%12||12;
   return `${h}:${String(mm).padStart(2,"0")} ${ap}`;
 }
 
 async function buildAndLoad(){
-  const s = toMin(startTime.value);
-  const e = toMin(endTime.value);
-  const g = parseInt(gapSelect.value);
+  const s=toMin(startTime.value);
+  const e=toMin(endTime.value);
+  const g=parseInt(gapSelect.value);
 
-  const tbody = ttTable.querySelector("tbody");
-  tbody.innerHTML = "";
+  const tb=ttTable.querySelector("tbody");
+  tb.innerHTML="";
 
-  for(let cur=s; cur<e; cur+=g){
+  for(let cur=s;cur<e;cur+=g){
     let nxt=Math.min(cur+g,e);
-    let key = `${cur}-${nxt}`;
+    let key=`${cur}-${nxt}`;
 
-    tbody.innerHTML += `
+    tb.innerHTML+=`
       <tr>
         <td>${fmt(cur)} – ${fmt(nxt)}</td>
         <td>
@@ -267,49 +302,49 @@ async function buildAndLoad(){
       </tr>`;
   }
 
-  const r = await fetch(API+"/timetable?date="+ttDate.value);
-  const data = await r.json();
+  const r=await fetch(API+"/timetable?date="+ttDate.value);
+  const data=await r.json();
 
   document.querySelectorAll("textarea").forEach(t=>{
-    const f = data.find(b=>b.hour === t.dataset.key);
+    const f=data.find(b=>b.hour===t.dataset.key);
     if(f){
-      t.value = f.text;
-      if(f.completed) t.parentElement.classList.add("done");
+      t.value=f.text;
+      if(f.completed)t.parentElement.classList.add("done");
     }
   });
 }
 
 async function saveTimetable(){
-  const blocks = [];
+  const blocks=[];
   document.querySelectorAll("textarea").forEach(t=>{
     blocks.push({
-      hour: t.dataset.key,
-      text: t.value,
-      completed: t.parentElement.classList.contains("done")
+      hour:t.dataset.key,
+      text:t.value,
+      completed:t.parentElement.classList.contains("done")
     });
   });
 
   await fetch(API+"/timetable",{
     method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({ date: ttDate.value, blocks })
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({date:ttDate.value,blocks})
   });
 
   alert("Saved");
 }
 
 async function copyDay(offset){
-  const d = new Date(ttDate.value);
+  const d=new Date(ttDate.value);
   d.setDate(d.getDate()+offset);
-  const src = d.toISOString().split("T")[0];
+  const src=d.toISOString().split("T")[0];
 
-  const r = await fetch(API+"/timetable?date="+src);
-  const data = await r.json();
+  const r=await fetch(API+"/timetable?date="+src);
+  const data=await r.json();
 
   document.querySelectorAll("textarea").forEach(t=>{
-    const f = data.find(b=>b.hour === t.dataset.key);
-    t.value = f ? f.text : "";
-    t.parentElement.classList.toggle("done", f?.completed);
+    const f=data.find(b=>b.hour===t.dataset.key);
+    t.value=f?f.text:"";
+    t.parentElement.classList.toggle("done",f?.completed);
   });
 }
 </script>
