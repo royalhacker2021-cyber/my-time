@@ -99,7 +99,7 @@
   <table id="ttTable">
     <thead>
       <tr>
-        <th style="width:120px;">Time</th>
+        <th style="width:140px;">Time</th>
         <th>Mission / Task</th>
       </tr>
     </thead>
@@ -113,7 +113,7 @@
 <script>
 const API = "https://my-time-backend.onrender.com";
 
-/* LOGIN — FIXED */
+/* LOGIN */
 loginBtn.onclick = () => {
   const pwd = document.getElementById("passwordInput").value;
 
@@ -145,18 +145,27 @@ function back(){
   dashboard.classList.remove("hidden");
 }
 
+/* TIME FORMAT */
+function formatTime(minutes){
+  let h = Math.floor(minutes / 60);
+  let m = minutes % 60;
+  let ampm = h >= 12 ? "PM" : "AM";
+  h = h % 12;
+  if (h === 0) h = 12;
+  return `${h}:${String(m).padStart(2,"0")} ${ampm}`;
+}
+
+/* BUILD TABLE */
 function buildTable(){
   const gap = parseInt(gapSelect.value);
   const tbody = ttTable.querySelector("tbody");
   tbody.innerHTML = "";
 
-  let minutes = 5 * 60;
-  const end = 24 * 60;
+  let minutes = 5 * 60;   // 5:00 AM
+  const end = 24 * 60;    // 12:00 AM
 
   while(minutes < end){
-    const h = Math.floor(minutes/60);
-    const m = minutes%60;
-    const label = `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
+    const label = formatTime(minutes);
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
@@ -178,6 +187,7 @@ function markDone(btn){
   btn.parentElement.classList.toggle("done");
 }
 
+/* SAVE / LOAD */
 function saveTimetable(){
   const blocks = [];
   document.querySelectorAll("textarea").forEach(t=>{
@@ -200,7 +210,7 @@ function loadTimetable(){
     .then(r=>r.json())
     .then(data=>{
       document.querySelectorAll("textarea").forEach(t=>{
-        const saved = data.find(b=>b.hour===t.dataset.time);
+        const saved = data.find(b=>b.hour === t.dataset.time);
         if(saved) t.value = saved.text;
       });
     });
