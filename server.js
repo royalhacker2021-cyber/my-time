@@ -18,9 +18,11 @@ mongoose.connect(MONGO_URI)
 // ===== SCHEMA =====
 const TaskSchema = new mongoose.Schema({
   text: String,
-  completed: Boolean,
-  date: String
+  completed: { type: Boolean, default: false },
+  date: String,
+  createdAt: { type: Date, default: Date.now }
 });
+
 
 const Task = mongoose.model("Task", TaskSchema);
 
@@ -35,9 +37,15 @@ app.post("/login", (req, res) => {
 
 // ===== API =====
 app.get("/tasks", async (req, res) => {
-  const tasks = await Task.find();
+  const { date } = req.query;
+  const tasks = await Task.find({ date, completed: false });
   res.json(tasks);
 });
+app.get("/history", async (req, res) => {
+  const tasks = await Task.find({ completed: true }).sort({ createdAt: -1 });
+  res.json(tasks);
+});
+
 
 app.post("/tasks", async (req, res) => {
   const task = new Task(req.body);
