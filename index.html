@@ -99,7 +99,7 @@
   <table id="ttTable">
     <thead>
       <tr>
-        <th style="width:140px;">Time</th>
+        <th style="width:170px;">Time Range</th>
         <th>Mission / Task</th>
       </tr>
     </thead>
@@ -115,7 +115,7 @@ const API = "https://my-time-backend.onrender.com";
 
 /* LOGIN */
 loginBtn.onclick = () => {
-  const pwd = document.getElementById("passwordInput").value;
+  const pwd = passwordInput.value;
 
   fetch(API + "/login", {
     method: "POST",
@@ -145,27 +145,28 @@ function back(){
   dashboard.classList.remove("hidden");
 }
 
-/* TIME FORMAT */
-function formatTime(minutes){
-  let h = Math.floor(minutes / 60);
-  let m = minutes % 60;
+/* FORMAT TIME */
+function formatTime(min){
+  let h = Math.floor(min / 60);
+  let m = min % 60;
   let ampm = h >= 12 ? "PM" : "AM";
   h = h % 12;
   if (h === 0) h = 12;
   return `${h}:${String(m).padStart(2,"0")} ${ampm}`;
 }
 
-/* BUILD TABLE */
+/* BUILD TABLE WITH MERGED BLOCKS */
 function buildTable(){
   const gap = parseInt(gapSelect.value);
   const tbody = ttTable.querySelector("tbody");
   tbody.innerHTML = "";
 
-  let minutes = 5 * 60;   // 5:00 AM
-  const end = 24 * 60;    // 12:00 AM
+  let start = 5 * 60;   // 5:00 AM
+  const end = 24 * 60;  // 12:00 AM
 
-  while(minutes < end){
-    const label = formatTime(minutes);
+  while(start < end){
+    const finish = Math.min(start + gap, end);
+    const label = `${formatTime(start)} – ${formatTime(finish)}`;
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
@@ -177,7 +178,7 @@ function buildTable(){
     `;
     tbody.appendChild(tr);
 
-    minutes += gap;
+    start = finish;
   }
 
   loadTimetable();
