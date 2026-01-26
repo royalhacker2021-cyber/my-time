@@ -6,60 +6,66 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
-      font-family: "Segoe UI", Arial;
-      background: linear-gradient(135deg, #667eea, #764ba2);
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg,#43cea2,#185a9d);
       padding: 20px;
-      color: #333;
     }
     .card {
-      max-width: 420px;
+      max-width: 700px;
       margin: auto;
-      background: #ffffff;
+      background: #fff;
       padding: 20px;
-      border-radius: 14px;
+      border-radius: 12px;
       box-shadow: 0 10px 25px rgba(0,0,0,0.15);
       margin-bottom: 20px;
     }
     h2, h3 {
       text-align: center;
-      color: #4a4a4a;
     }
-    input, button {
-      width: 100%;
-      padding: 12px;
-      margin-top: 10px;
-      border-radius: 8px;
-      border: 1px solid #ddd;
-      font-size: 15px;
+    input, select, button, textarea {
+      padding: 8px;
+      font-size: 14px;
     }
     button {
-      background: #667eea;
-      color: #fff;
+      cursor: pointer;
       border: none;
-      font-weight: bold;
-    }
-    button.secondary {
-      background: #764ba2;
-    }
-    ul {
-      padding: 0;
-    }
-    li {
-      list-style: none;
-      background: #f3f4f6;
-      padding: 8px;
       border-radius: 6px;
-      margin-bottom: 6px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
     }
-    .hidden {
-      display: none;
+    .btn {
+      background: #185a9d;
+      color: #fff;
+      padding: 10px;
+      width: 100%;
+      margin-top: 10px;
     }
-    .hour {
-      font-weight: bold;
-      margin-top: 8px;
+    .btn-green {
+      background: #2ecc71;
+      color: white;
+      padding: 6px 10px;
+      margin-left: 6px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 6px;
+      vertical-align: top;
+    }
+    th {
+      background: #f0f0f0;
+    }
+    textarea {
+      width: 100%;
+      min-height: 40px;
+      resize: vertical;
+    }
+    .hidden { display:none; }
+    .done {
+      background: #d4edda;
+      text-decoration: line-through;
     }
   </style>
 </head>
@@ -69,150 +75,135 @@
 <!-- LOGIN -->
 <div id="loginBox" class="card">
   <h2>My Time</h2>
-  <input id="password" type="password" placeholder="Enter password">
-  <button id="loginBtn">Login</button>
+  <input id="password" type="password" placeholder="Enter password" style="width:100%;">
+  <button class="btn" id="loginBtn">Login</button>
 </div>
 
 <!-- DASHBOARD -->
 <div id="dashboard" class="card hidden">
   <h3>Dashboard</h3>
-  <button onclick="showTasks()">Tasks</button>
-  <button class="secondary" onclick="showTimetable()">Timetable</button>
-</div>
-
-<!-- TASKS -->
-<div id="tasksScreen" class="card hidden">
-  <h3>Tasks</h3>
-  <input type="date" id="taskDate">
-  <input id="taskInput" placeholder="New task">
-  <button onclick="addTask()">Add Task</button>
-  <ul id="taskList"></ul>
-  <button class="secondary" onclick="goBack()">Back</button>
+  <button class="btn" onclick="openTimetable()">Timetable</button>
 </div>
 
 <!-- TIMETABLE -->
 <div id="timetableScreen" class="card hidden">
-  <h3>Timetable</h3>
-  <input type="date" id="timetableDate">
-  <div id="timeBlocks"></div>
-  <button onclick="saveTimetable()">Save Timetable</button>
-  <button class="secondary" onclick="goBack()">Back</button>
+  <h3>Daily Timetable</h3>
+
+  <label>Date:</label>
+  <input type="date" id="ttDate">
+
+  <label style="margin-left:10px;">Time Gap:</label>
+  <select id="gapSelect">
+    <option value="30">30 Minutes</option>
+    <option value="60" selected>1 Hour</option>
+    <option value="120">2 Hours</option>
+  </select>
+
+  <button class="btn" onclick="buildTable()">Build Timetable</button>
+
+  <table id="ttTable">
+    <thead>
+      <tr>
+        <th style="width:120px;">Time</th>
+        <th>Mission / Task</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <button class="btn" onclick="saveTimetable()">Save Timetable</button>
+  <button class="btn" onclick="back()">Back</button>
 </div>
 
 <script>
 const API = "https://my-time-backend.onrender.com";
 
-const loginBox = document.getElementById("loginBox");
-const dashboard = document.getElementById("dashboard");
-const tasksScreen = document.getElementById("tasksScreen");
-const timetableScreen = document.getElementById("timetableScreen");
-
-document.getElementById("loginBtn").onclick = () => {
-  fetch(API + "/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ password: password.value })
-  })
-  .then(r => {
-    if (!r.ok) throw new Error("Wrong password");
+loginBtn.onclick = () => {
+  fetch(API+"/login",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({password})
+  }).then(r=>{
+    if(!r.ok) throw "Wrong password";
     return r.json();
-  })
-  .then(() => {
+  }).then(()=>{
     loginBox.classList.add("hidden");
     dashboard.classList.remove("hidden");
-  })
-  .catch(e => alert(e.message));
+  }).catch(e=>alert(e));
 };
 
-function showTasks() {
-  dashboard.classList.add("hidden");
-  tasksScreen.classList.remove("hidden");
-  taskDate.valueAsDate = new Date();
-  loadTasks();
-}
-
-function showTimetable() {
+function openTimetable(){
   dashboard.classList.add("hidden");
   timetableScreen.classList.remove("hidden");
-  timetableDate.valueAsDate = new Date();
-  loadTimetable();
+  ttDate.valueAsDate = new Date();
+  buildTable();
 }
 
-function goBack() {
-  tasksScreen.classList.add("hidden");
+function back(){
   timetableScreen.classList.add("hidden");
   dashboard.classList.remove("hidden");
 }
 
-/* TASKS */
-taskDate.onchange = loadTasks;
+function buildTable(){
+  const gap = parseInt(gapSelect.value);
+  const tbody = ttTable.querySelector("tbody");
+  tbody.innerHTML = "";
 
-function loadTasks() {
-  fetch(API + "/tasks?date=" + taskDate.value)
-    .then(r => r.json())
-    .then(data => {
-      taskList.innerHTML = "";
-      data.forEach(t => {
-        let li = document.createElement("li");
-        li.innerHTML = `${t.text} <button onclick="completeTask('${t._id}')">✔</button>`;
-        taskList.appendChild(li);
+  let minutes = 5 * 60;
+  const end = 24 * 60;
+
+  while(minutes < end){
+    const h = Math.floor(minutes/60);
+    const m = minutes%60;
+    const label = `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${label}</td>
+      <td>
+        <textarea data-time="${label}"></textarea>
+        <button class="btn-green" onclick="markDone(this)">✔</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+
+    minutes += gap;
+  }
+
+  loadTimetable();
+}
+
+function markDone(btn){
+  const td = btn.parentElement;
+  td.classList.toggle("done");
+}
+
+function saveTimetable(){
+  const blocks = [];
+  document.querySelectorAll("textarea").forEach(t=>{
+    blocks.push({
+      hour: t.dataset.time,
+      text: t.value,
+      date: ttDate.value
+    });
+  });
+
+  fetch(API+"/timetable",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({date:ttDate.value,blocks})
+  }).then(()=>alert("Timetable saved"));
+}
+
+function loadTimetable(){
+  fetch(API+"/timetable?date="+ttDate.value)
+    .then(r=>r.json())
+    .then(data=>{
+      document.querySelectorAll("textarea").forEach(t=>{
+        const saved = data.find(b=>b.hour===t.dataset.time);
+        if(saved) t.value = saved.text;
       });
     });
-}
-
-function addTask() {
-  fetch(API + "/tasks", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text: taskInput.value, date: taskDate.value })
-  }).then(() => {
-    taskInput.value = "";
-    loadTasks();
-  });
-}
-
-function completeTask(id) {
-  fetch(API + "/tasks/" + id, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ completed: true })
-  }).then(loadTasks);
-}
-
-/* TIMETABLE */
-timetableDate.onchange = loadTimetable;
-
-function loadTimetable() {
-  fetch(API + "/timetable?date=" + timetableDate.value)
-    .then(r => r.json())
-    .then(data => {
-      timeBlocks.innerHTML = "";
-      for (let i = 6; i <= 22; i++) {
-        let hour = i + ":00";
-        let saved = data.find(b => b.hour === hour);
-        timeBlocks.innerHTML += `
-          <div class="hour">${hour}</div>
-          <input data-hour="${hour}" value="${saved ? saved.text : ""}">
-        `;
-      }
-    });
-}
-
-function saveTimetable() {
-  let blocks = [];
-  document.querySelectorAll("#timeBlocks input").forEach(i => {
-    blocks.push({
-      hour: i.dataset.hour,
-      text: i.value,
-      date: timetableDate.value
-    });
-  });
-
-  fetch(API + "/timetable", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ date: timetableDate.value, blocks })
-  }).then(() => alert("Timetable saved"));
 }
 </script>
 
