@@ -378,36 +378,41 @@ async function buildAndLoad(){
       </tr>`;
   }
 
-  const r=await fetch(API+"/timetable?date="+ttDate.value);
-  const data=await r.json();
+ // 🔄 Load from local storage
+const local = getLocalData()[ttDate.value] || [];
 
-  document.querySelectorAll("textarea").forEach(t=>{
-    const f=data.find(b=>b.hour===t.dataset.key);
-    if(f){
-      t.value=f.text;
-      if(f.completed)t.parentElement.classList.add("done");
-    }
-  });
+document.querySelectorAll("textarea").forEach(t=>{
+  const f = local.find(b => b.hour === t.dataset.key);
+  if(f){
+    t.value = f.text;
+    t.parentElement.classList.toggle("done", f.completed);
+  } else {
+    t.value = "";
+    t.parentElement.classList.remove("done");
+  }
+});
+
 }
 
-async function saveTimetable(){
-  const blocks=[];
+function saveTimetable(){
+  const date = ttDate.value;
+  const blocks = [];
+
   document.querySelectorAll("textarea").forEach(t=>{
     blocks.push({
-      hour:t.dataset.key,
-      text:t.value,
-      completed:t.parentElement.classList.contains("done")
+      hour: t.dataset.key,
+      text: t.value,
+      completed: t.parentElement.classList.contains("done")
     });
   });
 
-  await fetch(API+"/timetable",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({date:ttDate.value,blocks})
-  });
+  const all = getLocalData();
+  all[date] = blocks;
+  setLocalData(all);
 
-  alert("Saved");
+  alert("Saved locally ✔");
 }
+
 
 async function copyDay(offset){
   const d=new Date(ttDate.value);
@@ -431,6 +436,17 @@ if ("serviceWorker" in navigator) {
     .then(() => console.log("Service Worker registered"))
     .catch(err => console.error("Service Worker error", err));
 }
+    // ===============================
+// OFFLINE STORAGE HELPERS
+// ===============================
+function getLocalData() {
+  return JSON.parse(localStorage.getItem("myTimeData") || "{}");
+}
+
+function setLocalData(data) {
+  localStorage.setItem("myTimeData", JSON.stringify(data));
+}
+
 </script>
 
 </body>
