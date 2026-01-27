@@ -1,452 +1,224 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>My Time</title>
-  <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#6a5acd">
-  
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
 :root{
   --primary:#6a5acd;
-  --primary-soft:#e9e7fb;
-  --secondary:#00c9a7;
-  --danger:#ef4444;
-  --bg:linear-gradient(135deg,#667eea,#764ba2);
+  --bg:#f4f6fb;
   --card:#ffffff;
   --muted:#6b7280;
-  --border:#e5e7eb;
+  --done:#00c9a7;
 }
 
 *{box-sizing:border-box}
 
 body{
   margin:0;
-  font-family: "Inter","Segoe UI",system-ui,sans-serif;
+  font-family:system-ui,Segoe UI,Roboto,Arial;
   background:var(--bg);
-  min-height:100vh;
   padding:16px;
 }
 
-/* ---------- CARDS ---------- */
 .card{
-  max-width:960px;
-  margin:20px auto;
+  max-width:900px;
+  margin:auto;
   background:var(--card);
-  border-radius:22px;
-  padding:24px;
-  box-shadow:
-    0 20px 40px rgba(0,0,0,.18),
-    inset 0 1px 0 rgba(255,255,255,.6);
+  border-radius:20px;
+  padding:20px;
+  box-shadow:0 10px 25px rgba(0,0,0,.12);
 }
 
-/* ---------- HEADINGS ---------- */
-h2,h3{
-  margin:0 0 14px;
+h2{
   text-align:center;
-  font-weight:600;
-  color:#111827;
+  margin:0 0 16px;
 }
 
-/* ---------- FORM ELEMENTS ---------- */
 label{
-  font-size:12px;
-  font-weight:600;
+  font-size:13px;
   color:var(--muted);
+  font-weight:600;
 }
 
-input,select,textarea{
-  width:100%;
-  padding:12px 14px;
-  border-radius:14px;
-  border:1px solid var(--border);
+input,textarea,button{
   font-size:14px;
-  outline:none;
-  transition:.15s;
-  background:#fff;
 }
 
-input:focus,select:focus,textarea:focus{
-  border-color:var(--primary);
-  box-shadow:0 0 0 3px var(--primary-soft);
+input,textarea{
+  width:100%;
+  padding:10px;
+  border-radius:12px;
+  border:1px solid #ddd;
 }
 
 textarea{
   resize:vertical;
-  min-height:44px;
+  min-height:42px;
 }
 
-/* ---------- BUTTONS ---------- */
 button{
   border:none;
-  border-radius:14px;
+  border-radius:12px;
+  padding:12px;
   cursor:pointer;
-  font-size:14px;
   font-weight:600;
-  transition:.15s;
 }
 
 .btn{
   background:var(--primary);
-  color:#fff;
-  padding:14px;
-  width:100%;
-  margin-top:16px;
-}
-
-.btn:hover{filter:brightness(1.05)}
-
-.btn-secondary{
-  background:#f3f4f6;
-  color:#111827;
-  padding:12px;
+  color:white;
   width:100%;
   margin-top:10px;
 }
 
-.btn-green{
-  background:var(--secondary);
-  color:white;
-  padding:8px 14px;
-  border-radius:12px;
-}
-
-/* ---------- LAYOUT ---------- */
 .row{
   display:flex;
-  gap:14px;
-  flex-wrap:wrap;
+  gap:10px;
+  margin-bottom:10px;
 }
 .row>div{flex:1}
 
-/* ---------- SLIDER ---------- */
-.slider{
-  display:flex;
-  gap:12px;
-  margin:16px 0;
-}
-.slider button{
-  flex:1;
-}
-
-/* ---------- WEEK STRIP ---------- */
-.week{
-  display:flex;
-  gap:8px;
-  margin-bottom:16px;
-}
-.week div{
-  flex:1;
-  text-align:center;
-  padding:10px 0;
-  border-radius:14px;
-  background:#f3f4f6;
-  font-size:13px;
-  font-weight:600;
-  cursor:pointer;
-  transition:.15s;
-}
-.week div:hover{background:#e5e7eb}
-.week .active{
-  background:var(--primary);
-  color:white;
-}
-
-/* ---------- TABLE ---------- */
-table{
-  width:100%;
-  border-collapse:separate;
-  border-spacing:0 10px;
-  margin-top:14px;
-}
-
-thead th{
-  font-size:12px;
-  text-transform:uppercase;
-  letter-spacing:.04em;
-  color:var(--muted);
-  padding:8px 10px;
-}
-
-tbody tr{
+.block{
   background:#f9fafb;
   border-radius:16px;
+  padding:12px;
+  margin-bottom:10px;
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
 }
 
-tbody td{
-  padding:14px;
+.block.done{
+  background:rgba(0,201,167,.15);
 }
 
-tbody tr td:first-child{
-  width:150px;
+.time{
+  width:90px;
   font-weight:600;
-  color:#111827;
+  white-space:nowrap;
 }
 
-/* ---------- DONE STATE ---------- */
-.done{
-  background:rgba(0,201,167,.12) !important;
-}
-.done textarea{
-  text-decoration:line-through;
-  opacity:.75;
+.actions{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
 }
 
-/* ---------- MISC ---------- */
-.hidden{display:none}
+.small{
+  font-size:12px;
+  padding:6px 10px;
+}
 </style>
-
 </head>
 
 <body>
 
-<div id="loginBox" class="card">
+<div class="card">
   <h2>My Time</h2>
-  <input id="passwordInput" type="password" placeholder="Enter password">
-  <button class="btn" id="loginBtn">Login</button>
-</div>
-
-<div id="dashboard" class="card hidden">
-  <h3>Dashboard</h3>
-  <button class="btn" onclick="openTimetable()">Timetable</button>
-</div>
-
-<div id="timetableScreen" class="card hidden">
-  <h3>Daily Timetable</h3>
 
   <label>Date</label>
-  <input type="date" id="ttDate">
+  <input type="date" id="date">
 
-  <div class="slider">
-    <button class="btn-secondary" onclick="shiftDate(-1)">◀ Previous</button>
-    <button class="btn-secondary" onclick="shiftDate(1)">Next ▶</button>
-  </div>
+  <hr style="margin:16px 0">
 
-  <div class="week" id="weekStrip"></div>
-
+  <label>Add Time Block</label>
   <div class="row">
-    <div><label>Start</label><input type="time" id="startTime"></div>
-    <div><label>End</label><input type="time" id="endTime"></div>
-    <div>
-      <label>Gap</label>
-      <select id="gapSelect">
-        <option value="30">30 min</option>
-        <option value="60">1 hour</option>
-        <option value="120">2 hours</option>
-      </select>
-    </div>
+    <div><input type="time" id="start"></div>
+    <div><input type="time" id="end"></div>
   </div>
+  <textarea id="text" placeholder="What will you do?"></textarea>
+  <button class="btn" onclick="addBlock()">Add Block</button>
 
-  <button class="btn" onclick="buildAndLoad()">Build Timetable</button>
-  <button class="btn-secondary" onclick="copyDay(-1)">Copy Yesterday</button>
+  <hr style="margin:16px 0">
 
-  <table id="ttTable">
-    <thead>
-      <tr><th>Time Range</th><th>Mission</th></tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-
-  <button class="btn" onclick="saveTimetable()">Save Timetable</button>
-  <button class="btn" onclick="back()">Back</button>
+  <div id="blocks"></div>
 </div>
 
 <script>
-// 🔐 Auto-login for this device only
-window.addEventListener("load", () => {
-  if (localStorage.loggedIn === "yes") {
-    loginBox.classList.add("hidden");
-    dashboard.classList.remove("hidden");
-  }
-});
+const dateInput = document.getElementById("date");
+const blocksDiv = document.getElementById("blocks");
 
-const API="https://my-time-backend.onrender.com";
+dateInput.value = new Date().toISOString().split("T")[0];
 
-/* LOGIN */
-loginBtn.onclick=async()=>{
-  const r=await fetch(API+"/login",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({password:passwordInput.value})
-  });
-  if(!r.ok)return alert("Wrong password");
-
-  // ✅ remember this device
-  localStorage.loggedIn = "yes";
-  // 🔔 WAKE BACKEND (cold start fix)
-  fetch(API + "/timetable?date=1970-01-01").catch(()=>{});
-
-  loginBox.classList.add("hidden");
-  dashboard.classList.remove("hidden");
-};
-
-function back(){
-  timetableScreen.classList.add("hidden");
-  dashboard.classList.remove("hidden");
+// ---------- LOCAL STORAGE ----------
+function getData(){
+  return JSON.parse(localStorage.getItem("myTimeOffline") || "{}");
+}
+function setData(d){
+  localStorage.setItem("myTimeOffline", JSON.stringify(d));
 }
 
-function openTimetable(){
-  dashboard.classList.add("hidden");
-  timetableScreen.classList.remove("hidden");
+// ---------- LOAD DAY ----------
+function load(){
+  blocksDiv.innerHTML="";
+  const data = getData()[dateInput.value] || [];
 
-  ttDate.value=new Date().toISOString().split("T")[0];
-  startTime.value=localStorage.startTime||"05:00";
-  endTime.value=localStorage.endTime||"23:59";
-  gapSelect.value=localStorage.gap||"60";
+  data.forEach((b,i)=>{
+    const div = document.createElement("div");
+    div.className = "block" + (b.done?" done":"");
 
-  syncWeekStrip();
-  buildAndLoad();
-}
-
-ttDate.onchange=()=>{
-  syncWeekStrip();
-  buildAndLoad();
-};
-
-startTime.onchange=endTime.onchange=gapSelect.onchange=()=>{
-  localStorage.startTime=startTime.value;
-  localStorage.endTime=endTime.value;
-  localStorage.gap=gapSelect.value;
-};
-
-/* DATE CONTROLS */
-function shiftDate(d){
-  const x=new Date(ttDate.value);
-  x.setDate(x.getDate()+d);
-  ttDate.value=x.toISOString().split("T")[0];
-  syncWeekStrip();
-  buildAndLoad();
-}
-
-function syncWeekStrip(){
-  const base=new Date(ttDate.value);
-  const day=base.getDay();
-  const diff=day===0?-6:1-day;
-  const monday=new Date(base);
-  monday.setDate(base.getDate()+diff);
-
-  const names=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
-  weekStrip.innerHTML="";
-
-  for(let i=0;i<7;i++){
-    const d=new Date(monday);
-    d.setDate(monday.getDate()+i);
-    const iso=d.toISOString().split("T")[0];
-
-    const div=document.createElement("div");
-    div.textContent=names[i];
-    if(iso===ttDate.value)div.classList.add("active");
-
-    div.onclick=()=>{
-      ttDate.value=iso;
-      syncWeekStrip();
-      buildAndLoad();
-    };
-    weekStrip.appendChild(div);
-  }
-}
-
-/* TIMETABLE LOGIC (UNCHANGED) */
-function toMin(t){const[a,b]=t.split(":").map(Number);return a*60+b}
-function fmt(m){
-  let h=Math.floor(m/60),mm=m%60;
-  let ap=h>=12?"PM":"AM";h=h%12||12;
-  return `${h}:${String(mm).padStart(2,"0")} ${ap}`;
-}
-
-async function buildAndLoad(){
-  const s=toMin(startTime.value);
-  const e=toMin(endTime.value);
-  const g=parseInt(gapSelect.value);
-
-  const tb=ttTable.querySelector("tbody");
-  tb.innerHTML="";
-
-  for(let cur=s;cur<e;cur+=g){
-    let nxt=Math.min(cur+g,e);
-    let key=`${cur}-${nxt}`;
-
-    tb.innerHTML+=`
-      <tr>
-        <td>${fmt(cur)} – ${fmt(nxt)}</td>
-        <td>
-          <textarea data-key="${key}"></textarea>
-          <button class="btn-green" onclick="this.parentElement.classList.toggle('done')">✔</button>
-        </td>
-      </tr>`;
-  }
-
- // 🔄 Load from local storage
-const local = getLocalData()[ttDate.value] || [];
-
-document.querySelectorAll("textarea").forEach(t=>{
-  const f = local.find(b => b.hour === t.dataset.key);
-  if(f){
-    t.value = f.text;
-    t.parentElement.classList.toggle("done", f.completed);
-  } else {
-    t.value = "";
-    t.parentElement.classList.remove("done");
-  }
-});
-
-}
-
-function saveTimetable(){
-  const date = ttDate.value;
-  const blocks = [];
-
-  document.querySelectorAll("textarea").forEach(t=>{
-    blocks.push({
-      hour: t.dataset.key,
-      text: t.value,
-      completed: t.parentElement.classList.contains("done")
-    });
-  });
-
-  const all = getLocalData();
-  all[date] = blocks;
-  setLocalData(all);
-
-  alert("Saved locally ✔");
-}
-
-
-async function copyDay(offset){
-  const d=new Date(ttDate.value);
-  d.setDate(d.getDate()+offset);
-  const src=d.toISOString().split("T")[0];
-
-  const r=await fetch(API+"/timetable?date="+src);
-  const data=await r.json();
-
-  document.querySelectorAll("textarea").forEach(t=>{
-    const f=data.find(b=>b.hour===t.dataset.key);
-    t.value=f?f.text:"";
-    t.parentElement.classList.toggle("done",f?.completed);
+    div.innerHTML = `
+      <div class="time">${b.start}–${b.end}</div>
+      <textarea onchange="editText(${i},this.value)">${b.text}</textarea>
+      <div class="actions">
+        <button class="small" onclick="toggleDone(${i})">✔</button>
+        <button class="small" onclick="removeBlock(${i})">✕</button>
+      </div>
+    `;
+    blocksDiv.appendChild(div);
   });
 }
-</script>
 
-  <script>
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("sw.js")
-    .then(() => console.log("Service Worker registered"))
-    .catch(err => console.error("Service Worker error", err));
-}
-    // ===============================
-// OFFLINE STORAGE HELPERS
-// ===============================
-function getLocalData() {
-  return JSON.parse(localStorage.getItem("myTimeData") || "{}");
+// ---------- ADD BLOCK ----------
+function addBlock(){
+  if(!start.value || !end.value){
+    alert("Select start and end time");
+    return;
+  }
+
+  const all = getData();
+  all[dateInput.value] ||= [];
+
+  all[dateInput.value].push({
+    start:start.value,
+    end:end.value,
+    text:text.value,
+    done:false
+  });
+
+  setData(all);
+  text.value="";
+  load();
 }
 
-function setLocalData(data) {
-  localStorage.setItem("myTimeData", JSON.stringify(data));
+// ---------- TOGGLE DONE ----------
+function toggleDone(i){
+  const all = getData();
+  all[dateInput.value][i].done = !all[dateInput.value][i].done;
+  setData(all);
+  load();
 }
 
+// ---------- EDIT TEXT ----------
+function editText(i,val){
+  const all = getData();
+  all[dateInput.value][i].text = val;
+  setData(all);
+}
+
+// ---------- REMOVE ----------
+function removeBlock(i){
+  const all = getData();
+  all[dateInput.value].splice(i,1);
+  setData(all);
+  load();
+}
+
+dateInput.onchange = load;
+load();
 </script>
 
 </body>
