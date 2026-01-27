@@ -9,7 +9,7 @@
 :root{
   --primary:#6a5acd;
   --accent:#00c9a7;
-  --bg:#f3f4f8;
+  --bg:#f4f6fb;
   --card:#ffffff;
   --muted:#6b7280;
   --border:#e5e7eb;
@@ -25,47 +25,33 @@ body{
 }
 
 .card{
-  max-width:1000px;
+  max-width:1100px;
   margin:auto;
   background:var(--card);
   border-radius:24px;
   padding:24px;
-  box-shadow:0 20px 40px rgba(0,0,0,.12);
+  box-shadow:0 20px 45px rgba(0,0,0,.12);
 }
 
 h2{
-  margin:0 0 16px;
   text-align:center;
+  margin:0 0 12px;
 }
 
-label{
-  font-size:12px;
-  font-weight:600;
-  color:var(--muted);
-}
-
-input,select,textarea,button{
-  font-size:14px;
-}
-
-input,textarea{
-  width:100%;
-  padding:10px;
-  border-radius:12px;
-  border:1px solid var(--border);
-}
-
-textarea{
-  resize:vertical;
-  min-height:38px;
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  margin-bottom:14px;
 }
 
 button{
   border:none;
-  border-radius:12px;
-  padding:12px;
-  cursor:pointer;
+  border-radius:14px;
+  padding:10px 14px;
   font-weight:600;
+  cursor:pointer;
 }
 
 .btn{
@@ -73,34 +59,65 @@ button{
   color:white;
 }
 
-.btn-alt{
-  background:#f3f4f6;
+.btn-light{
+  background:#eef0ff;
 }
 
-.row{
+.week{
+  display:flex;
+  gap:6px;
+  margin-bottom:14px;
+}
+
+.week div{
+  flex:1;
+  padding:10px 0;
+  text-align:center;
+  border-radius:14px;
+  background:#f1f2f6;
+  font-size:13px;
+  cursor:pointer;
+}
+
+.week .active{
+  background:var(--primary);
+  color:white;
+}
+
+.controls{
   display:flex;
   gap:10px;
-  flex-wrap:wrap;
+  margin-bottom:14px;
 }
 
-.row>div{flex:1}
+select,input{
+  padding:10px;
+  border-radius:12px;
+  border:1px solid var(--border);
+}
 
 .block{
   display:grid;
-  grid-template-columns:160px 1fr 80px;
+  grid-template-columns:110px 110px 1fr 120px;
   gap:10px;
   padding:14px;
-  border-radius:16px;
+  border-radius:18px;
   background:#f9fafb;
   margin-bottom:10px;
+  align-items:center;
 }
 
 .block.done{
   background:rgba(0,201,167,.15);
 }
 
-.time{
-  font-weight:600;
+textarea{
+  width:100%;
+  resize:vertical;
+  min-height:36px;
+  border-radius:10px;
+  border:1px solid var(--border);
+  padding:8px;
 }
 
 .actions{
@@ -108,16 +125,10 @@ button{
   gap:6px;
 }
 
-.small{
-  padding:6px 10px;
-  font-size:12px;
-}
-
 footer{
-  margin-top:20px;
   display:flex;
   gap:10px;
-  flex-wrap:wrap;
+  margin-top:18px;
 }
 </style>
 </head>
@@ -127,30 +138,29 @@ footer{
 <div class="card">
   <h2>My Time</h2>
 
-  <label>Date</label>
-  <input type="date" id="date">
-
-  <div class="row" style="margin-top:12px">
-    <div>
-      <label>Default Gap (hours)</label>
-      <select id="gap">
-        <option value="1">1 hour</option>
-        <option value="2" selected>2 hours</option>
-        <option value="3">3 hours</option>
-      </select>
-    </div>
-    <div style="align-self:end">
-      <button class="btn" onclick="generate()">Generate Day</button>
-    </div>
+  <div class="topbar">
+    <button class="btn-light" onclick="changeDay(-1)">◀</button>
+    <input type="date" id="date">
+    <button class="btn-light" onclick="changeDay(1)">▶</button>
   </div>
 
-  <hr style="margin:16px 0">
+  <div class="week" id="week"></div>
+
+  <div class="controls">
+    <select id="gap">
+      <option value="1">1 hour</option>
+      <option value="2" selected>2 hours</option>
+      <option value="3">3 hours</option>
+    </select>
+    <button class="btn" onclick="generate()">Generate Day</button>
+    <button class="btn-light" onclick="addRow()">Add Row</button>
+  </div>
 
   <div id="blocks"></div>
 
   <footer>
     <button class="btn" onclick="backup()">Backup</button>
-    <button class="btn-alt" onclick="restore()">Restore</button>
+    <button class="btn-light" onclick="restore()">Restore</button>
     <input type="file" id="file" hidden>
   </footer>
 </div>
@@ -160,53 +170,80 @@ const dateEl=document.getElementById("date");
 const blocksEl=document.getElementById("blocks");
 dateEl.value=new Date().toISOString().split("T")[0];
 
-function store(d){localStorage.setItem("myTimeData",JSON.stringify(d))}
-function loadStore(){return JSON.parse(localStorage.getItem("myTimeData")||"{}")}
+const days=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 
-function toAMPM(h){
-  const a=h>=12?"PM":"AM";
-  const x=((h+11)%12+1);
-  return x+":00 "+a;
+function store(d){localStorage.setItem("myTimeFinal",JSON.stringify(d))}
+function loadStore(){return JSON.parse(localStorage.getItem("myTimeFinal")||"{}")}
+
+function buildWeek(){
+  const w=document.getElementById("week");
+  w.innerHTML="";
+  const base=new Date(dateEl.value);
+  for(let i=0;i<7;i++){
+    const d=new Date(base);
+    d.setDate(base.getDate()-base.getDay()+i);
+    const div=document.createElement("div");
+    div.textContent=days[i];
+    if(d.toISOString().slice(0,10)===dateEl.value)div.classList.add("active");
+    div.onclick=()=>{dateEl.value=d.toISOString().slice(0,10);render();}
+    w.appendChild(div);
+  }
+}
+
+function changeDay(n){
+  const d=new Date(dateEl.value);
+  d.setDate(d.getDate()+n);
+  dateEl.value=d.toISOString().slice(0,10);
+  render();
 }
 
 function generate(){
   const gap=+document.getElementById("gap").value;
   const all=loadStore();
-  const day=[];
+  const rows=[];
   for(let h=0;h<24;h+=gap){
-    day.push({
-      start:h,
-      end:(h+gap)%24,
+    rows.push({
+      start:(h+"").padStart(2,"0")+":00",
+      end:((h+gap)%24+"").padStart(2,"0")+":00",
       text:"",
       done:false
     });
   }
-  all[dateEl.value]=day;
+  all[dateEl.value]=rows;
   store(all);
   render();
 }
 
+function addRow(){
+  const all=loadStore();
+  all[dateEl.value] ||= [];
+  all[dateEl.value].push({start:"00:00",end:"01:00",text:"",done:false});
+  store(all);render();
+}
+
 function render(){
   blocksEl.innerHTML="";
+  buildWeek();
   const day=loadStore()[dateEl.value]||[];
   day.forEach((b,i)=>{
     const div=document.createElement("div");
     div.className="block"+(b.done?" done":"");
     div.innerHTML=`
-      <div class="time">${toAMPM(b.start)} – ${toAMPM(b.end)}</div>
-      <textarea onchange="edit(${i},this.value)">${b.text}</textarea>
+      <input type="time" value="${b.start}" onchange="edit(${i},'start',this.value)">
+      <input type="time" value="${b.end}" onchange="edit(${i},'end',this.value)">
+      <textarea onchange="edit(${i},'text',this.value)">${b.text}</textarea>
       <div class="actions">
-        <button class="small" onclick="toggle(${i})">✔</button>
-        <button class="small" onclick="removeBlock(${i})">✕</button>
+        <button onclick="toggle(${i})">✔</button>
+        <button onclick="removeRow(${i})">✕</button>
       </div>
     `;
     blocksEl.appendChild(div);
   });
 }
 
-function edit(i,v){
+function edit(i,k,v){
   const all=loadStore();
-  all[dateEl.value][i].text=v;
+  all[dateEl.value][i][k]=v;
   store(all);
 }
 
@@ -216,18 +253,17 @@ function toggle(i){
   store(all);render();
 }
 
-function removeBlock(i){
+function removeRow(i){
   const all=loadStore();
   all[dateEl.value].splice(i,1);
   store(all);render();
 }
 
 function backup(){
-  const d=localStorage.getItem("myTimeData");
-  if(!d)return alert("Nothing to backup");
-  const b=new Blob([d],{type:"application/json"});
+  const d=localStorage.getItem("myTimeFinal");
+  if(!d)return alert("No data");
   const a=document.createElement("a");
-  a.href=URL.createObjectURL(b);
+  a.href=URL.createObjectURL(new Blob([d]));
   a.download="my-time-backup.json";
   a.click();
 }
