@@ -55,6 +55,12 @@ app.post("/timetable", async (req, res) => {
   if (clean.length) await Timetable.insertMany(clean);
   res.json({ success: true });
 });
+// ===== HISTORY =====
+app.get("/history", async (req, res) => {
+  const data = await Timetable.find({ completed: true })
+    .sort({ date: -1 });
+  res.json(data);
+});
 
 // ===== WEEKLY =====
 app.get("/weekly-report", async (req, res) => {
