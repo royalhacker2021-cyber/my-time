@@ -205,6 +205,10 @@ loginBtn.onclick=async()=>{
     body:JSON.stringify({password:passwordInput.value})
   });
   if(!r.ok)return alert("Wrong password");
+
+  // 🔔 WAKE BACKEND (cold start fix)
+  fetch(API + "/timetable?date=1970-01-01").catch(()=>{});
+
   loginBox.classList.add("hidden");
   dashboard.classList.remove("hidden");
 };
@@ -351,7 +355,7 @@ async function copyDay(offset){
   });
 }
 </script>
-<!--
+
   <script>
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js")
@@ -359,6 +363,6 @@ if ("serviceWorker" in navigator) {
     .catch(err => console.error("Service Worker error", err));
 }
 </script>
--->
+
 </body>
 </html>
