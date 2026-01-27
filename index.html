@@ -11,67 +11,97 @@
 <style>
 :root{
   --primary:#6a5acd;
+  --primary-soft:#e9e7fb;
   --secondary:#00c9a7;
+  --danger:#ef4444;
   --bg:linear-gradient(135deg,#667eea,#764ba2);
-  --card:rgba(255,255,255,0.95);
+  --card:#ffffff;
   --muted:#6b7280;
+  --border:#e5e7eb;
 }
+
+*{box-sizing:border-box}
 
 body{
-  font-family:"Segoe UI",system-ui,sans-serif;
+  margin:0;
+  font-family: "Inter","Segoe UI",system-ui,sans-serif;
   background:var(--bg);
-  padding:20px;
+  min-height:100vh;
+  padding:16px;
 }
 
+/* ---------- CARDS ---------- */
 .card{
-  max-width:900px;
-  margin:auto;
+  max-width:960px;
+  margin:20px auto;
   background:var(--card);
+  border-radius:22px;
   padding:24px;
-  border-radius:18px;
-  box-shadow:0 20px 40px rgba(0,0,0,.18);
-  margin-bottom:24px;
+  box-shadow:
+    0 20px 40px rgba(0,0,0,.18),
+    inset 0 1px 0 rgba(255,255,255,.6);
 }
 
-h2,h3{text-align:center;margin-bottom:12px}
+/* ---------- HEADINGS ---------- */
+h2,h3{
+  margin:0 0 14px;
+  text-align:center;
+  font-weight:600;
+  color:#111827;
+}
 
-label{font-size:13px;color:var(--muted)}
+/* ---------- FORM ELEMENTS ---------- */
+label{
+  font-size:12px;
+  font-weight:600;
+  color:var(--muted);
+}
 
 input,select,textarea{
   width:100%;
-  padding:10px;
+  padding:12px 14px;
+  border-radius:14px;
+  border:1px solid var(--border);
   font-size:14px;
-  border-radius:10px;
-  border:1px solid #ddd;
-  margin-top:6px;
+  outline:none;
+  transition:.15s;
+  background:#fff;
 }
 
-textarea{resize:vertical}
+input:focus,select:focus,textarea:focus{
+  border-color:var(--primary);
+  box-shadow:0 0 0 3px var(--primary-soft);
+}
 
+textarea{
+  resize:vertical;
+  min-height:44px;
+}
+
+/* ---------- BUTTONS ---------- */
 button{
   border:none;
-  border-radius:12px;
+  border-radius:14px;
   cursor:pointer;
   font-size:14px;
+  font-weight:600;
   transition:.15s;
-}
-
-button:hover{
-  transform:translateY(-1px);
-  box-shadow:0 8px 18px rgba(0,0,0,.15);
 }
 
 .btn{
   background:var(--primary);
-  color:white;
-  padding:12px;
+  color:#fff;
+  padding:14px;
   width:100%;
-  margin-top:14px;
+  margin-top:16px;
 }
 
+.btn:hover{filter:brightness(1.05)}
+
 .btn-secondary{
-  background:#f1f5f9;
-  padding:10px;
+  background:#f3f4f6;
+  color:#111827;
+  padding:12px;
   width:100%;
   margin-top:10px;
 }
@@ -79,34 +109,11 @@ button:hover{
 .btn-green{
   background:var(--secondary);
   color:white;
-  padding:6px 12px;
-  margin-left:8px;
+  padding:8px 14px;
+  border-radius:12px;
 }
 
-table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:16px;
-}
-
-th{
-  background:#f8fafc;
-  padding:10px;
-  font-size:13px;
-}
-
-td{
-  border-top:1px solid #eee;
-  padding:10px;
-}
-
-.done{
-  background:rgba(0,201,167,.15);
-  border-radius:10px;
-}
-
-.hidden{display:none}
-
+/* ---------- LAYOUT ---------- */
 .row{
   display:flex;
   gap:14px;
@@ -114,31 +121,83 @@ td{
 }
 .row>div{flex:1}
 
+/* ---------- SLIDER ---------- */
 .slider{
   display:flex;
-  gap:10px;
-  margin-top:14px;
+  gap:12px;
+  margin:16px 0;
+}
+.slider button{
+  flex:1;
 }
 
+/* ---------- WEEK STRIP ---------- */
 .week{
   display:flex;
   gap:8px;
-  margin-top:14px;
+  margin-bottom:16px;
 }
 .week div{
   flex:1;
   text-align:center;
-  padding:8px;
-  border-radius:10px;
-  background:#f1f5f9;
-  cursor:pointer;
+  padding:10px 0;
+  border-radius:14px;
+  background:#f3f4f6;
   font-size:13px;
+  font-weight:600;
+  cursor:pointer;
+  transition:.15s;
 }
+.week div:hover{background:#e5e7eb}
 .week .active{
   background:var(--primary);
   color:white;
 }
+
+/* ---------- TABLE ---------- */
+table{
+  width:100%;
+  border-collapse:separate;
+  border-spacing:0 10px;
+  margin-top:14px;
+}
+
+thead th{
+  font-size:12px;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+  color:var(--muted);
+  padding:8px 10px;
+}
+
+tbody tr{
+  background:#f9fafb;
+  border-radius:16px;
+}
+
+tbody td{
+  padding:14px;
+}
+
+tbody tr td:first-child{
+  width:150px;
+  font-weight:600;
+  color:#111827;
+}
+
+/* ---------- DONE STATE ---------- */
+.done{
+  background:rgba(0,201,167,.12) !important;
+}
+.done textarea{
+  text-decoration:line-through;
+  opacity:.75;
+}
+
+/* ---------- MISC ---------- */
+.hidden{display:none}
 </style>
+
 </head>
 
 <body>
