@@ -254,6 +254,14 @@ tbody tr td:first-child{
 </div>
 
 <script>
+// 🔐 Auto-login for this device only
+window.addEventListener("load", () => {
+  if (localStorage.loggedIn === "yes") {
+    loginBox.classList.add("hidden");
+    dashboard.classList.remove("hidden");
+  }
+});
+
 const API="https://my-time-backend.onrender.com";
 
 /* LOGIN */
@@ -265,6 +273,8 @@ loginBtn.onclick=async()=>{
   });
   if(!r.ok)return alert("Wrong password");
 
+  // ✅ remember this device
+  localStorage.loggedIn = "yes";
   // 🔔 WAKE BACKEND (cold start fix)
   fetch(API + "/timetable?date=1970-01-01").catch(()=>{});
 
