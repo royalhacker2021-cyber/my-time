@@ -5,47 +5,46 @@
 <title>My Time</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <link rel="manifest"href=menifest.json">
-  
 <style>
 :root{
   --primary:#6a5acd;
-  --bg:#f4f6fb;
+  --accent:#00c9a7;
+  --bg:#f3f4f8;
   --card:#ffffff;
   --muted:#6b7280;
-  --done:#00c9a7;
+  --border:#e5e7eb;
 }
 
 *{box-sizing:border-box}
 
 body{
   margin:0;
-  font-family:system-ui,Segoe UI,Roboto,Arial;
+  font-family:Inter,system-ui,Segoe UI,Roboto;
   background:var(--bg);
   padding:16px;
 }
 
 .card{
-  max-width:900px;
+  max-width:1000px;
   margin:auto;
   background:var(--card);
-  border-radius:20px;
-  padding:20px;
-  box-shadow:0 10px 25px rgba(0,0,0,.12);
+  border-radius:24px;
+  padding:24px;
+  box-shadow:0 20px 40px rgba(0,0,0,.12);
 }
 
 h2{
-  text-align:center;
   margin:0 0 16px;
+  text-align:center;
 }
 
 label{
-  font-size:13px;
-  color:var(--muted);
+  font-size:12px;
   font-weight:600;
+  color:var(--muted);
 }
 
-input,textarea,button{
+input,select,textarea,button{
   font-size:14px;
 }
 
@@ -53,12 +52,12 @@ input,textarea{
   width:100%;
   padding:10px;
   border-radius:12px;
-  border:1px solid #ddd;
+  border:1px solid var(--border);
 }
 
 textarea{
   resize:vertical;
-  min-height:42px;
+  min-height:38px;
 }
 
 button{
@@ -72,25 +71,28 @@ button{
 .btn{
   background:var(--primary);
   color:white;
-  width:100%;
-  margin-top:10px;
+}
+
+.btn-alt{
+  background:#f3f4f6;
 }
 
 .row{
   display:flex;
   gap:10px;
-  margin-bottom:10px;
+  flex-wrap:wrap;
 }
+
 .row>div{flex:1}
 
 .block{
-  background:#f9fafb;
-  border-radius:16px;
-  padding:12px;
-  margin-bottom:10px;
-  display:flex;
+  display:grid;
+  grid-template-columns:160px 1fr 80px;
   gap:10px;
-  align-items:flex-start;
+  padding:14px;
+  border-radius:16px;
+  background:#f9fafb;
+  margin-bottom:10px;
 }
 
 .block.done{
@@ -98,20 +100,24 @@ button{
 }
 
 .time{
-  width:90px;
   font-weight:600;
-  white-space:nowrap;
 }
 
 .actions{
   display:flex;
-  flex-direction:column;
   gap:6px;
 }
 
 .small{
-  font-size:12px;
   padding:6px 10px;
+  font-size:12px;
+}
+
+footer{
+  margin-top:20px;
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
 }
 </style>
 </head>
@@ -124,153 +130,121 @@ button{
   <label>Date</label>
   <input type="date" id="date">
 
-  <hr style="margin:16px 0">
-
-  <label>Add Time Block</label>
-  <div class="row">
-    <div><input type="time" id="start"></div>
-    <div><input type="time" id="end"></div>
+  <div class="row" style="margin-top:12px">
+    <div>
+      <label>Default Gap (hours)</label>
+      <select id="gap">
+        <option value="1">1 hour</option>
+        <option value="2" selected>2 hours</option>
+        <option value="3">3 hours</option>
+      </select>
+    </div>
+    <div style="align-self:end">
+      <button class="btn" onclick="generate()">Generate Day</button>
+    </div>
   </div>
-  <textarea id="text" placeholder="What will you do?"></textarea>
-  <button class="btn" onclick="addBlock()">Add Block</button>
 
   <hr style="margin:16px 0">
 
   <div id="blocks"></div>
-  
-  <hr style="margin:16px 0">
 
-<button class="btn" onclick="backupData()">Backup Data</button>
-<button class="btn" style="background:#444;margin-top:8px" onclick="restoreData()">Restore Data</button>
-
-<input type="file" id="restoreFile" accept=".json" hidden>
-
+  <footer>
+    <button class="btn" onclick="backup()">Backup</button>
+    <button class="btn-alt" onclick="restore()">Restore</button>
+    <input type="file" id="file" hidden>
+  </footer>
 </div>
 
 <script>
-const dateInput = document.getElementById("date");
-const blocksDiv = document.getElementById("blocks");
+const dateEl=document.getElementById("date");
+const blocksEl=document.getElementById("blocks");
+dateEl.value=new Date().toISOString().split("T")[0];
 
-dateInput.value = new Date().toISOString().split("T")[0];
+function store(d){localStorage.setItem("myTimeData",JSON.stringify(d))}
+function loadStore(){return JSON.parse(localStorage.getItem("myTimeData")||"{}")}
 
-// ---------- LOCAL STORAGE ----------
-function getData(){
-  return JSON.parse(localStorage.getItem("myTimeOffline") || "{}");
+function toAMPM(h){
+  const a=h>=12?"PM":"AM";
+  const x=((h+11)%12+1);
+  return x+":00 "+a;
 }
-function setData(d){
-  localStorage.setItem("myTimeOffline", JSON.stringify(d));
+
+function generate(){
+  const gap=+document.getElementById("gap").value;
+  const all=loadStore();
+  const day=[];
+  for(let h=0;h<24;h+=gap){
+    day.push({
+      start:h,
+      end:(h+gap)%24,
+      text:"",
+      done:false
+    });
+  }
+  all[dateEl.value]=day;
+  store(all);
+  render();
 }
 
-// ---------- LOAD DAY ----------
-function load(){
-  blocksDiv.innerHTML="";
-  const data = getData()[dateInput.value] || [];
-
-  data.forEach((b,i)=>{
-    const div = document.createElement("div");
-    div.className = "block" + (b.done?" done":"");
-
-    div.innerHTML = `
-      <div class="time">${b.start}–${b.end}</div>
-      <textarea onchange="editText(${i},this.value)">${b.text}</textarea>
+function render(){
+  blocksEl.innerHTML="";
+  const day=loadStore()[dateEl.value]||[];
+  day.forEach((b,i)=>{
+    const div=document.createElement("div");
+    div.className="block"+(b.done?" done":"");
+    div.innerHTML=`
+      <div class="time">${toAMPM(b.start)} – ${toAMPM(b.end)}</div>
+      <textarea onchange="edit(${i},this.value)">${b.text}</textarea>
       <div class="actions">
-        <button class="small" onclick="toggleDone(${i})">✔</button>
+        <button class="small" onclick="toggle(${i})">✔</button>
         <button class="small" onclick="removeBlock(${i})">✕</button>
       </div>
     `;
-    blocksDiv.appendChild(div);
+    blocksEl.appendChild(div);
   });
 }
 
-// ---------- ADD BLOCK ----------
-function addBlock(){
-  if(!start.value || !end.value){
-    alert("Select start and end time");
-    return;
-  }
-
-  const all = getData();
-  all[dateInput.value] ||= [];
-
-  all[dateInput.value].push({
-    start:start.value,
-    end:end.value,
-    text:text.value,
-    done:false
-  });
-
-  setData(all);
-  text.value="";
-  load();
+function edit(i,v){
+  const all=loadStore();
+  all[dateEl.value][i].text=v;
+  store(all);
 }
 
-// ---------- TOGGLE DONE ----------
-function toggleDone(i){
-  const all = getData();
-  all[dateInput.value][i].done = !all[dateInput.value][i].done;
-  setData(all);
-  load();
+function toggle(i){
+  const all=loadStore();
+  all[dateEl.value][i].done=!all[dateEl.value][i].done;
+  store(all);render();
 }
 
-// ---------- EDIT TEXT ----------
-function editText(i,val){
-  const all = getData();
-  all[dateInput.value][i].text = val;
-  setData(all);
-}
-
-// ---------- REMOVE ----------
 function removeBlock(i){
-  const all = getData();
-  all[dateInput.value].splice(i,1);
-  setData(all);
-  load();
+  const all=loadStore();
+  all[dateEl.value].splice(i,1);
+  store(all);render();
 }
 
-dateInput.onchange = load;
-load();
-  // ---------- BACKUP ----------
-function backupData(){
-  const data = localStorage.getItem("myTimeOffline");
-  if(!data){
-    alert("No data to backup");
-    return;
-  }
-
-  const blob = new Blob([data], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "my-time-backup.json";
+function backup(){
+  const d=localStorage.getItem("myTimeData");
+  if(!d)return alert("Nothing to backup");
+  const b=new Blob([d],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(b);
+  a.download="my-time-backup.json";
   a.click();
-
-  URL.revokeObjectURL(url);
 }
 
-// ---------- RESTORE ----------
-function restoreData(){
-  document.getElementById("restoreFile").click();
+function restore(){
+  document.getElementById("file").click();
 }
+document.getElementById("file").onchange=e=>{
+  const f=e.target.files[0];
+  if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{store(JSON.parse(r.result));render();}
+  r.readAsText(f);
+};
 
-document.getElementById("restoreFile").addEventListener("change", e=>{
-  const file = e.target.files[0];
-  if(!file) return;
-
-  const reader = new FileReader();
-  reader.onload = () => {
-    try{
-      const data = JSON.parse(reader.result);
-      localStorage.setItem("myTimeOffline", JSON.stringify(data));
-      alert("Data restored successfully ✔");
-      load();
-    }catch{
-      alert("Invalid backup file");
-    }
-  };
-  reader.readAsText(file);
-});
-
+dateEl.onchange=render;
+render();
 </script>
 
 </body>
