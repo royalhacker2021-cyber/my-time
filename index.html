@@ -175,6 +175,15 @@ const days=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 function store(d){localStorage.setItem("myTimeFinal",JSON.stringify(d))}
 function loadStore(){return JSON.parse(localStorage.getItem("myTimeFinal")||"{}")}
 
+/* ===== ADD THIS EXACTLY HERE ===== */
+function toAMPM(time){
+  let [h,m]=time.split(":").map(Number);
+  const ampm = h >= 12 ? "PM" : "AM";
+  h = h % 12 || 12;
+  return h + ":" + m.toString().padStart(2,"0") + " " + ampm;
+}
+/* ===== END ===== */
+
 function buildWeek(){
   const w=document.getElementById("week");
   w.innerHTML="";
@@ -228,9 +237,16 @@ function render(){
   day.forEach((b,i)=>{
     const div=document.createElement("div");
     div.className="block"+(b.done?" done":"");
-    div.innerHTML=`
-      <input type="time" value="${b.start}" onchange="edit(${i},'start',this.value)">
-      <input type="time" value="${b.end}" onchange="edit(${i},'end',this.value)">
+    div.innerHTML=`<div>
+  <input type="time" value="${b.start}" onchange="edit(${i},'start',this.value)">
+  <div style="font-size:12px;color:#6b7280">${toAMPM(b.start)}</div>
+</div>
+
+<div>
+  <input type="time" value="${b.end}" onchange="edit(${i},'end',this.value)">
+  <div style="font-size:12px;color:#6b7280">${toAMPM(b.end)}</div>
+</div>
+
       <textarea onchange="edit(${i},'text',this.value)">${b.text}</textarea>
       <div class="actions">
         <button onclick="toggle(${i})">✔</button>
