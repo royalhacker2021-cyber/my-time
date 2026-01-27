@@ -135,6 +135,14 @@ button{
   <hr style="margin:16px 0">
 
   <div id="blocks"></div>
+  
+  <hr style="margin:16px 0">
+
+<button class="btn" onclick="backupData()">Backup Data</button>
+<button class="btn" style="background:#444;margin-top:8px" onclick="restoreData()">Restore Data</button>
+
+<input type="file" id="restoreFile" accept=".json" hidden>
+
 </div>
 
 <script>
@@ -219,6 +227,48 @@ function removeBlock(i){
 
 dateInput.onchange = load;
 load();
+  // ---------- BACKUP ----------
+function backupData(){
+  const data = localStorage.getItem("myTimeOffline");
+  if(!data){
+    alert("No data to backup");
+    return;
+  }
+
+  const blob = new Blob([data], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "my-time-backup.json";
+  a.click();
+
+  URL.revokeObjectURL(url);
+}
+
+// ---------- RESTORE ----------
+function restoreData(){
+  document.getElementById("restoreFile").click();
+}
+
+document.getElementById("restoreFile").addEventListener("change", e=>{
+  const file = e.target.files[0];
+  if(!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    try{
+      const data = JSON.parse(reader.result);
+      localStorage.setItem("myTimeOffline", JSON.stringify(data));
+      alert("Data restored successfully ✔");
+      load();
+    }catch{
+      alert("Invalid backup file");
+    }
+  };
+  reader.readAsText(file);
+});
+
 </script>
 
 </body>
