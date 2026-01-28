@@ -3,374 +3,197 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Time | Flow</title>
+    <title>My Flow | Analytics</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#4f46e5">
-    <link rel="apple-touch-icon" href="icon-192.png">
     <style>
         :root {
             --primary: #4f46e5;
-            --primary-glow: rgba(79, 70, 229, 0.15);
-            --success: #10b981;
-            --danger: #ef4444;
-            --bg: #f0f2f5;
+            --bg: #f8fafc;
             --card: #ffffff;
-            --text-header: #1e1b4b;
-            --text-body: #475569;
-            --border: #e2e8f0;
+            --text-main: #1e293b;
+            /* Category Colors */
+            --color-lecture: #f59e0b; /* Amber */
+            --color-study: #8b5cf6;   /* Violet */
+            --color-sleep: #3b82f6;   /* Blue */
+            --color-others: #94a3b8;  /* Slate */
         }
 
-        * { box-sizing: border-box; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        * { box-sizing: border-box; transition: all 0.2s ease; }
+        body { margin: 0; font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text-main); padding: 15px; }
+        .container { max-width: 850px; margin: auto; }
 
-        body {
-            margin: 0;
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            background: var(--bg);
-            color: var(--text-body);
-            padding: 24px 16px;
-        }
-
-        .container { max-width: 800px; margin: auto; }
-
-        /* Header Style */
-        .app-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 32px;
-        }
-
-        h1 { 
-            font-size: 1.75rem; 
-            font-weight: 800; 
-            color: var(--text-header); 
-            margin: 0;
-            background: linear-gradient(135deg, #4f46e5, #9333ea);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        /* Date & Week Picker */
-        .calendar-card {
-            background: var(--card);
-            border-radius: 28px;
-            padding: 20px;
-            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05);
-            margin-bottom: 24px;
-        }
-
-        .date-navigator {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 20px;
-        }
-
-        .date-display {
-            font-weight: 700;
-            font-size: 1.1rem;
-            border: none;
-            background: none;
-            color: var(--text-header);
-            cursor: pointer;
-        }
-
-        .nav-arrow {
-            background: var(--primary-glow);
-            color: var(--primary);
-            border: none;
-            width: 36px;
-            height: 36px;
-            border-radius: 12px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        .nav-arrow:hover { background: var(--primary); color: white; }
-
-        .week-strip {
-            display: flex;
-            gap: 10px;
-            overflow-x: auto;
-            padding-bottom: 8px;
-        }
-
-        .day-pill {
-            flex: 1;
-            min-width: 55px;
-            padding: 12px 8px;
-            text-align: center;
-            border-radius: 18px;
-            background: #f8fafc;
-            cursor: pointer;
-            border: 2px solid transparent;
-        }
-
-        .day-pill span { display: block; font-size: 10px; text-transform: uppercase; font-weight: 700; opacity: 0.6; }
-        .day-pill b { font-size: 16px; }
-
-        .day-pill.active {
-            background: var(--primary);
-            color: white;
-            box-shadow: 0 8px 20px -5px rgba(79, 70, 229, 0.4);
-        }
-
-        /* Controls */
-        .action-bar {
-            display: flex;
+        /* Summary Dashboard */
+        .summary-menu {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
             gap: 12px;
-            margin-bottom: 24px;
+            margin-bottom: 25px;
+            background: var(--card);
+            padding: 20px;
+            border-radius: 24px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
         }
+        @media(min-width: 600px) { .summary-menu { grid-template-columns: repeat(4, 1fr); } }
 
-        .btn {
-            border: none;
-            border-radius: 16px;
-            padding: 14px 24px;
-            font-weight: 700;
-            cursor: pointer;
-            font-size: 14px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        }
+        .stat-item { text-align: center; padding: 10px; border-radius: 16px; border: 1px solid #f1f5f9; }
+        .stat-label { font-size: 11px; font-weight: 800; text-transform: uppercase; margin-bottom: 4px; display: block; }
+        .stat-value { font-size: 18px; font-weight: 900; }
 
-        .btn-primary { background: var(--primary); color: white; flex: 2; }
-        .btn-secondary { background: white; color: var(--text-body); flex: 1; }
-        .btn:active { transform: scale(0.96); }
+        .stat-lecture { border-left: 4px solid var(--color-lecture); color: var(--color-lecture); }
+        .stat-study { border-left: 4px solid var(--color-study); color: var(--color-study); }
+        .stat-sleep { border-left: 4px solid var(--color-sleep); color: var(--color-sleep); }
+        .stat-others { border-left: 4px solid var(--color-others); color: var(--color-others); }
 
-        /* Task Block Card */
+        /* Task Cards */
         .task-card {
             background: var(--card);
-            border-radius: 24px;
-            padding: 20px;
-            margin-bottom: 16px;
-            display: grid;
-            grid-template-columns: auto 1fr auto;
-            align-items: center;
-            gap: 20px;
-            border: 1px solid transparent;
-            box-shadow: 0 4px 20px -5px rgba(0,0,0,0.03);
-        }
-
-        .task-card:hover { border-color: var(--primary-glow); transform: translateY(-2px); }
-
-        .time-group {
+            border-radius: 20px;
+            padding: 16px;
+            margin-bottom: 12px;
             display: flex;
             flex-direction: column;
-            gap: 4px;
-            border-right: 2px solid #f1f5f9;
-            padding-right: 15px;
+            gap: 12px;
+            border-left: 6px solid var(--color-others);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
         }
+        
+        /* Category Border Overrides */
+        .card-lecture { border-left-color: var(--color-lecture); }
+        .card-study { border-left-color: var(--color-study); }
+        .card-sleep { border-left-color: var(--color-sleep); }
+        .card-others { border-left-color: var(--color-others); }
 
-        .time-input {
-            border: none;
-            font-weight: 800;
-            color: var(--text-header);
-            width: 85px;
-            font-size: 14px;
-            background: transparent;
-            outline: none;
-        }
-
-        .task-input {
-            border: none;
-            font-size: 16px;
-            font-weight: 500;
-            color: var(--text-header);
-            background: transparent;
-            outline: none;
-            resize: none;
-            width: 100%;
-        }
-
-        /* COMPLETED STATE - IMPROVED */
-        .task-card.done {
-            background: #f0fdf4; /* Very soft green */
-            border-color: #bbf7d0;
-            box-shadow: none;
-        }
-
-        .task-card.done .task-input {
-            text-decoration: line-through;
-            color: #166534;
-            opacity: 0.6;
-        }
-
-        .task-card.done .time-input { opacity: 0.5; }
-
-        .circle-btn {
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            border: none;
+        .task-header { display: flex; justify-content: space-between; align-items: center; }
+        .time-box { font-weight: 800; font-size: 13px; color: #64748b; }
+        
+        .cat-select {
+            padding: 6px 12px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            font-size: 11px;
+            font-weight: 700;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
+            outline: none;
         }
 
-        .btn-check { background: white; border: 2px solid #e2e8f0; color: #cbd5e1; }
-        .task-card.done .btn-check { background: var(--success); color: white; border-color: var(--success); }
-        .btn-delete { background: #fee2e2; color: var(--danger); }
+        .task-body { display: flex; gap: 15px; align-items: flex-start; }
+        .task-text { flex: 1; border: none; font-size: 15px; font-weight: 500; resize: none; background: transparent; outline: none; }
+        
+        /* Done State */
+        .task-card.done { opacity: 0.6; background: #f1f5f9; border-left-color: #cbd5e1; }
+        .task-card.done .task-text { text-decoration: line-through; }
 
-        @media (max-width: 600px) {
-            .task-card { grid-template-columns: 1fr auto; }
-            .time-group { flex-direction: row; border-right: none; border-bottom: 1px solid #f1f5f9; grid-column: 1 / 3; width: 100%; }
-        }
+        .btn-circle { width: 36px; height: 36px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .btn-check { background: #e2e8f0; color: #94a3b8; }
+        .task-card.done .btn-check { background: #10b981; color: white; }
 
-        footer { text-align: center; margin-top: 40px; padding-bottom: 40px; }
-        .footer-link { font-size: 12px; color: var(--text-body); opacity: 0.5; text-decoration: none; margin: 0 10px; }
+        .top-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .date-picker { border: none; font-weight: 800; font-size: 16px; background: none; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="app-header">
-        <h1>My Flow</h1>
-        <button class="nav-arrow" onclick="backup()" title="Backup">💾</button>
+    <div class="top-nav">
+        <input type="date" id="date" class="date-picker">
+        <button onclick="addRow()" style="background:var(--primary); color:white; border:none; padding:10px 20px; border-radius:12px; font-weight:700;">+ Block</button>
     </div>
 
-    <div class="calendar-card">
-        <div class="date-navigator">
-            <button class="nav-arrow" onclick="changeDay(-1)">←</button>
-            <input type="date" id="date" class="date-display">
-            <button class="nav-arrow" onclick="changeDay(1)">→</button>
+    <div class="summary-menu">
+        <div class="stat-item stat-lecture">
+            <span class="stat-label">Lectures</span>
+            <span class="stat-value" id="hrs-lecture">0h</span>
         </div>
-        <div class="week-strip" id="week"></div>
-    </div>
-
-    <div class="action-bar">
-        <button class="btn btn-primary" onclick="addRow()">+ New Block</button>
-        <button class="btn btn-secondary" onclick="generate()">Quick Fill</button>
-        <button class="btn btn-secondary" onclick="copyYesterday()">Yesterday</button>
+        <div class="stat-item stat-study">
+            <span class="stat-label">Self Study</span>
+            <span class="stat-value" id="hrs-study">0h</span>
+        </div>
+        <div class="stat-item stat-sleep">
+            <span class="stat-label">Sleep</span>
+            <span class="stat-value" id="hrs-sleep">0h</span>
+        </div>
+        <div class="stat-item stat-others">
+            <span class="stat-label">Others</span>
+            <span class="stat-value" id="hrs-others">0h</span>
+        </div>
     </div>
 
     <div id="blocks"></div>
-
-    <footer>
-        <a href="#" class="footer-link" onclick="restore()">Restore Backup</a>
-        <input type="file" id="file" hidden>
-    </footer>
 </div>
 
 <script>
     const dateEl = document.getElementById("date");
     const blocksEl = document.getElementById("blocks");
     dateEl.value = new Date().toISOString().split("T")[0];
-    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-    function store(d) { localStorage.setItem("myTimeFlow", JSON.stringify(d)); }
-    function loadStore() { return JSON.parse(localStorage.getItem("myTimeFlow") || "{}"); }
+    function store(d) { localStorage.setItem("myTimeDeep", JSON.stringify(d)); }
+    function loadStore() { return JSON.parse(localStorage.getItem("myTimeDeep") || "{}"); }
 
-    function parseTimeInput(input) {
-        if (!input) return "09:00";
-        let clean = input.toLowerCase().replace(/\s/g, '');
-        let hours, minutes = 0;
-        const ampm = clean.match(/[ap]m/);
-        clean = clean.replace(/[ap]m/, '');
-        if (clean.includes(':')) { [hours, minutes] = clean.split(':').map(Number); }
-        else { hours = parseInt(clean); }
-        if (ampm && ampm[0] === 'pm' && hours < 12) hours += 12;
-        if (ampm && ampm[0] === 'am' && hours === 12) hours = 0;
-        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    function parseTime(t) {
+        const [h, m] = t.split(":").map(Number);
+        return h + (m / 60);
     }
 
-    function toPrettyTime(t) {
-        let [h, m] = t.split(":").map(Number);
-        const a = h >= 12 ? "PM" : "AM";
-        h = h % 12 || 12;
-        return `${h}:${m.toString().padStart(2, "0")} ${a}`;
+    function calculateStats(dayData) {
+        let stats = { lecture: 0, study: 0, sleep: 0, others: 0 };
+        dayData.forEach(b => {
+            const duration = Math.abs(parseTime(b.end) - parseTime(b.start));
+            stats[b.category || 'others'] += duration;
+        });
+        
+        document.getElementById('hrs-lecture').textContent = stats.lecture.toFixed(1) + 'h';
+        document.getElementById('hrs-study').textContent = stats.study.toFixed(1) + 'h';
+        document.getElementById('hrs-sleep').textContent = stats.sleep.toFixed(1) + 'h';
+        document.getElementById('hrs-others').textContent = stats.others.toFixed(1) + 'h';
     }
 
     function render() {
         blocksEl.innerHTML = "";
-        buildWeek();
         const all = loadStore();
         let day = all[dateEl.value] || [];
         day.sort((a, b) => a.start.localeCompare(b.start));
+        calculateStats(day);
 
         day.forEach((b, i) => {
             const div = document.createElement("div");
-            div.className = "task-card" + (b.done ? " done" : "");
+            div.className = `task-card card-${b.category || 'others'} ${b.done ? 'done' : ''}`;
             div.innerHTML = `
-                <div class="time-group">
-                    <input type="text" class="time-input" value="${toPrettyTime(b.start)}" onblur="updateTime(${i}, 'start', this.value)">
-                    <input type="text" class="time-input" value="${toPrettyTime(b.end)}" onblur="updateTime(${i}, 'end', this.value)" style="opacity:0.5; font-size:12px">
+                <div class="task-header">
+                    <div class="time-box" onclick="promptTime(${i})">${b.start} - ${b.end}</div>
+                    <select class="cat-select" onchange="updateBlock(${i}, 'category', this.value)">
+                        <option value="others" ${b.category==='others'?'selected':''}>Others</option>
+                        <option value="lecture" ${b.category==='lecture'?'selected':''}>Lecture</option>
+                        <option value="study" ${b.category==='study'?'selected':''}>Self Study</option>
+                        <option value="sleep" ${b.category==='sleep'?'selected':''}>Sleep</option>
+                    </select>
                 </div>
-                <textarea class="task-input" onchange="edit(${i},'text',this.value)" placeholder="Add a focus...">${b.text}</textarea>
-                <div style="display:flex; gap:8px">
-                    <button class="circle-btn btn-check" onclick="toggle(${i})">✓</button>
-                    <button class="circle-btn btn-delete" onclick="removeRow(${i})">×</button>
+                <div class="task-body">
+                    <textarea class="task-text" onchange="updateBlock(${i}, 'text', this.value)" placeholder="Plan something...">${b.text}</textarea>
+                    <button class="btn-circle btn-check" onclick="toggle(${i})">✓</button>
+                    <button class="btn-circle" onclick="removeRow(${i})" style="background:#fee2e2; color:#ef4444;">×</button>
                 </div>
             `;
             blocksEl.appendChild(div);
         });
     }
 
-    function updateTime(index, key, value) {
-        const all = loadStore();
-        all[dateEl.value][index][key] = parseTimeInput(value);
-        store(all); render();
-    }
-
-    function buildWeek() {
-        const w = document.getElementById("week");
-        w.innerHTML = "";
-        const base = new Date(dateEl.value);
-        for (let i = 0; i < 7; i++) {
-            const d = new Date(base);
-            d.setDate(base.getDate() - base.getDay() + i);
-            const dateStr = d.toISOString().slice(0, 10);
-            const div = document.createElement("div");
-            div.className = `day-pill ${dateStr === dateEl.value ? 'active' : ''}`;
-            div.innerHTML = `<span>${days[i]}</span><b>${d.getDate()}</b>`;
-            div.onclick = () => { dateEl.value = dateStr; render(); };
-            w.appendChild(div);
-        }
-    }
-
-    function changeDay(n) {
-        const d = new Date(dateEl.value);
-        d.setDate(d.getDate() + n);
-        dateEl.value = d.toISOString().slice(0, 10);
-        render();
-    }
-
-    function addRow() {
-        const all = loadStore();
-        all[dateEl.value] = all[dateEl.value] || [];
-        all[dateEl.value].push({ start: "09:00", end: "10:00", text: "", done: false });
-        store(all); render();
-    }
-
-    function generate() {
-        const all = loadStore();
-        const rows = [];
-        for (let h = 8; h < 20; h += 2) {
-            rows.push({ start: h.toString().padStart(2, "0") + ":00", end: (h+2).toString().padStart(2, "0") + ":00", text: "", done: false });
-        }
-        all[dateEl.value] = rows;
-        store(all); render();
-    }
-
-    function copyYesterday() {
-        const all = loadStore();
-        const d = new Date(dateEl.value);
-        d.setDate(d.getDate() - 1);
-        const y = d.toISOString().slice(0, 10);
-        if (!all[y]) return alert("Yesterday is empty!");
-        all[dateEl.value] = JSON.parse(JSON.stringify(all[y]));
-        store(all); render();
-    }
-
-    function edit(i, k, v) {
+    function updateBlock(i, k, v) {
         const all = loadStore();
         all[dateEl.value][i][k] = v;
-        store(all);
+        store(all); render();
     }
 
     function toggle(i) {
         const all = loadStore();
         all[dateEl.value][i].done = !all[dateEl.value][i].done;
+        store(all); render();
+    }
+
+    function addRow() {
+        const all = loadStore();
+        all[dateEl.value] = all[dateEl.value] || [];
+        all[dateEl.value].push({ start: "09:00", end: "10:00", text: "", category: "others", done: false });
         store(all); render();
     }
 
@@ -380,30 +203,19 @@
         store(all); render();
     }
 
-    function backup() {
-        const d = localStorage.getItem("myTimeFlow");
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(new Blob([d]));
-        a.download = `my-flow-backup.json`;
-        a.click();
+    function promptTime(i) {
+        const newStart = prompt("Enter Start Time (HH:MM)", "09:00");
+        const newEnd = prompt("Enter End Time (HH:MM)", "10:00");
+        if(newStart && newEnd) {
+            const all = loadStore();
+            all[dateEl.value][i].start = newStart;
+            all[dateEl.value][i].end = newEnd;
+            store(all); render();
+        }
     }
-
-    function restore() { document.getElementById("file").click(); }
-    document.getElementById("file").onchange = e => {
-        const f = e.target.files[0];
-        const r = new FileReader();
-        r.onload = () => { store(JSON.parse(r.result)); render(); };
-        r.readAsText(f);
-    };
 
     dateEl.onchange = render;
     render();
-
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js').catch(() => {});
-        });
-    }
 </script>
 
 </body>
