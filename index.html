@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Time | Flow State</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#6366f1">
+    <link rel="apple-touch-icon" href="logo.png">
+
     <style>
         :root {
             --primary: #6366f1;
@@ -48,7 +52,6 @@
             box-shadow: var(--shadow);
         }
 
-        /* Top Navigation */
         .topbar {
             display: flex;
             align-items: center;
@@ -82,7 +85,6 @@
 
         .nav-btn:hover { background: var(--primary); color: white; }
 
-        /* Week Picker */
         .week {
             display: flex;
             gap: 8px;
@@ -110,7 +112,6 @@
             box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
         }
 
-        /* Controls */
         .controls {
             display: flex;
             flex-wrap: wrap;
@@ -136,7 +137,6 @@
         
         .btn:hover { transform: translateY(-1px); filter: brightness(0.95); }
 
-        /* Time Block */
         .block {
             display: grid;
             grid-template-columns: 1fr;
@@ -259,24 +259,19 @@
     function store(d) { localStorage.setItem("myTimeModern", JSON.stringify(d)); }
     function loadStore() { return JSON.parse(localStorage.getItem("myTimeModern") || "{}"); }
 
-    // Natural Time Parsing Logic
     function parseTimeInput(input) {
         if (!input) return "09:00";
         let clean = input.toLowerCase().replace(/\s/g, '');
         let hours, minutes = 0;
-
         const ampm = clean.match(/[ap]m/);
         clean = clean.replace(/[ap]m/, '');
-
         if (clean.includes(':')) {
             [hours, minutes] = clean.split(':').map(Number);
         } else {
             hours = parseInt(clean);
         }
-
         if (ampm && ampm[0] === 'pm' && hours < 12) hours += 12;
         if (ampm && ampm[0] === 'am' && hours === 12) hours = 0;
-
         return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
     }
 
@@ -292,10 +287,7 @@
         buildWeek();
         const all = loadStore();
         let day = all[dateEl.value] || [];
-
-        // Auto-sort by time
         day.sort((a, b) => a.start.localeCompare(b.start));
-
         day.forEach((b, i) => {
             const div = document.createElement("div");
             div.className = "block" + (b.done ? " done" : "");
@@ -416,6 +408,15 @@
 
     dateEl.onchange = render;
     render();
+
+    // --- PWA SERVICE WORKER REGISTRATION ---
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('Service Worker registered!'))
+                .catch(err => console.log('Service Worker failed: ', err));
+        });
+    }
 </script>
 
 </body>
