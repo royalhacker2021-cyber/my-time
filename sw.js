@@ -1,12 +1,12 @@
-const CACHE_NAME = 'my-time-v1';
+const CACHE_NAME = 'my-time-v3';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
-  './logo.png'
+  './icon-192.png',
+  './icon-512.png'
 ];
 
-// Install Service Worker
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -15,7 +15,6 @@ self.addEventListener('install', (e) => {
   );
 });
 
-// Activate & Cleanup old caches
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then((keys) => {
@@ -26,7 +25,6 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// Fetch assets from cache first, then network
 self.addEventListener('fetch', (e) => {
   e.respondWith(
     caches.match(e.request).then((res) => {
