@@ -1,11 +1,17 @@
 {
   "name": "My Time Tracker",
   "short_name": "My Time",
+  "id": "/my-time/",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f8fafc",
   "theme_color": "#6366f1",
   "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
     {
       "src": "logo.png",
       "sizes": "512x512",
