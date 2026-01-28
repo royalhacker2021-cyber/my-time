@@ -3,190 +3,225 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Flow | Analytics</title>
+    <title>My Flow | Pro Analytics</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#4f46e5">
     <style>
         :root {
             --primary: #4f46e5;
+            --primary-light: #eef2ff;
             --bg: #f8fafc;
             --card: #ffffff;
             --text-main: #1e293b;
+            --text-muted: #64748b;
             /* Category Colors */
-            --color-lecture: #f59e0b; /* Amber */
-            --color-study: #8b5cf6;   /* Violet */
-            --color-sleep: #3b82f6;   /* Blue */
-            --color-others: #94a3b8;  /* Slate */
+            --color-lecture: #f59e0b;
+            --color-study: #8b5cf6;
+            --color-sleep: #3b82f6;
+            --color-others: #94a3b8;
         }
 
         * { box-sizing: border-box; transition: all 0.2s ease; }
-        body { margin: 0; font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text-main); padding: 15px; }
+        body { margin: 0; font-family: 'Inter', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text-main); padding: 15px; }
         .container { max-width: 850px; margin: auto; }
 
+        /* Header & Navigation */
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        h2 { margin: 0; font-weight: 800; background: linear-gradient(135deg, #4f46e5, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
+        .top-nav { display: flex; align-items: center; gap: 8px; margin-bottom: 15px; justify-content: space-between; }
+        .nav-btn { background: var(--primary-light); color: var(--primary); border: none; padding: 10px 15px; border-radius: 12px; cursor: pointer; font-weight: bold; }
+        .date-input { border: 1px solid #e2e8f0; padding: 10px; border-radius: 12px; font-weight: 700; outline: none; }
+
+        /* Week Slider */
+        .week-strip { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px; }
+        .day-pill { flex: 1; min-width: 60px; padding: 10px; text-align: center; border-radius: 15px; background: white; cursor: pointer; border: 1px solid #e2e8f0; }
+        .day-pill.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); }
+
         /* Summary Dashboard */
-        .summary-menu {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            margin-bottom: 25px;
-            background: var(--card);
-            padding: 20px;
-            border-radius: 24px;
-            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
-        }
+        .summary-menu { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
         @media(min-width: 600px) { .summary-menu { grid-template-columns: repeat(4, 1fr); } }
+        .stat-item { background: white; padding: 15px; border-radius: 20px; border-bottom: 4px solid var(--color-others); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        .stat-label { font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); }
+        .stat-value { font-size: 18px; font-weight: 900; display: block; }
+        .stat-lecture { border-bottom-color: var(--color-lecture); }
+        .stat-study { border-bottom-color: var(--color-study); }
+        .stat-sleep { border-bottom-color: var(--color-sleep); }
 
-        .stat-item { text-align: center; padding: 10px; border-radius: 16px; border: 1px solid #f1f5f9; }
-        .stat-label { font-size: 11px; font-weight: 800; text-transform: uppercase; margin-bottom: 4px; display: block; }
-        .stat-value { font-size: 18px; font-weight: 900; }
-
-        .stat-lecture { border-left: 4px solid var(--color-lecture); color: var(--color-lecture); }
-        .stat-study { border-left: 4px solid var(--color-study); color: var(--color-study); }
-        .stat-sleep { border-left: 4px solid var(--color-sleep); color: var(--color-sleep); }
-        .stat-others { border-left: 4px solid var(--color-others); color: var(--color-others); }
+        /* Action Buttons */
+        .btn-group { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .btn { border: none; padding: 12px 18px; border-radius: 14px; font-weight: 700; cursor: pointer; font-size: 14px; }
+        .btn-add { background: var(--primary); color: white; flex-grow: 1; }
+        .btn-light { background: white; color: var(--text-main); border: 1px solid #e2e8f0; }
 
         /* Task Cards */
-        .task-card {
-            background: var(--card);
-            border-radius: 20px;
-            padding: 16px;
-            margin-bottom: 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            border-left: 6px solid var(--color-others);
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
-        }
-        
-        /* Category Border Overrides */
-        .card-lecture { border-left-color: var(--color-lecture); }
-        .card-study { border-left-color: var(--color-study); }
-        .card-sleep { border-left-color: var(--color-sleep); }
-        .card-others { border-left-color: var(--color-others); }
-
-        .task-header { display: flex; justify-content: space-between; align-items: center; }
-        .time-box { font-weight: 800; font-size: 13px; color: #64748b; }
-        
-        .cat-select {
-            padding: 6px 12px;
-            border-radius: 10px;
-            border: 1px solid #e2e8f0;
-            font-size: 11px;
-            font-weight: 700;
-            cursor: pointer;
-            outline: none;
-        }
-
-        .task-body { display: flex; gap: 15px; align-items: flex-start; }
-        .task-text { flex: 1; border: none; font-size: 15px; font-weight: 500; resize: none; background: transparent; outline: none; }
-        
-        /* Done State */
-        .task-card.done { opacity: 0.6; background: #f1f5f9; border-left-color: #cbd5e1; }
+        .task-card { background: white; border-radius: 20px; padding: 16px; margin-bottom: 12px; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 15px; border: 1px solid #e2e8f0; }
+        .task-card.done { background: #f8fafc; opacity: 0.6; }
         .task-card.done .task-text { text-decoration: line-through; }
+        
+        .time-col { display: flex; flex-direction: column; gap: 4px; border-right: 2px solid #f1f5f9; padding-right: 12px; }
+        .time-box { border: none; font-weight: 800; color: var(--text-main); width: 85px; font-size: 13px; outline: none; background: none; }
+        .task-text { border: none; font-size: 15px; font-weight: 500; outline: none; resize: none; width: 100%; font-family: inherit; }
+        
+        .cat-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+        .select-cat { border: 1px solid #f1f5f9; padding: 5px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; }
 
-        .btn-circle { width: 36px; height: 36px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .btn-check { background: #e2e8f0; color: #94a3b8; }
+        .btn-circle { width: 34px; height: 34px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .btn-check { background: #f1f5f9; color: #cbd5e1; }
         .task-card.done .btn-check { background: #10b981; color: white; }
 
-        .top-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .date-picker { border: none; font-weight: 800; font-size: 16px; background: none; }
+        @media(max-width: 600px) {
+            .task-card { grid-template-columns: 1fr auto; }
+            .time-col { grid-column: 1 / 3; flex-direction: row; border: none; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; width: 100%; }
+        }
+
+        footer { margin-top: 30px; display: flex; justify-content: center; gap: 15px; padding-bottom: 40px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="top-nav">
-        <input type="date" id="date" class="date-picker">
-        <button onclick="addRow()" style="background:var(--primary); color:white; border:none; padding:10px 20px; border-radius:12px; font-weight:700;">+ Block</button>
+    <div class="header">
+        <h2>My Flow</h2>
+        <button class="nav-btn" onclick="backup()">💾 Backup</button>
     </div>
 
+    <div class="top-nav">
+        <button class="nav-btn" onclick="changeDay(-1)">◀</button>
+        <input type="date" id="date" class="date-input">
+        <button class="nav-btn" onclick="changeDay(1)">▶</button>
+    </div>
+
+    <div class="week-strip" id="week"></div>
+
     <div class="summary-menu">
-        <div class="stat-item stat-lecture">
-            <span class="stat-label">Lectures</span>
-            <span class="stat-value" id="hrs-lecture">0h</span>
-        </div>
-        <div class="stat-item stat-study">
-            <span class="stat-label">Self Study</span>
-            <span class="stat-value" id="hrs-study">0h</span>
-        </div>
-        <div class="stat-item stat-sleep">
-            <span class="stat-label">Sleep</span>
-            <span class="stat-value" id="hrs-sleep">0h</span>
-        </div>
-        <div class="stat-item stat-others">
-            <span class="stat-label">Others</span>
-            <span class="stat-value" id="hrs-others">0h</span>
-        </div>
+        <div class="stat-item stat-lecture"><span class="stat-label">Lectures</span><span class="stat-value" id="hrs-lecture">0h</span></div>
+        <div class="stat-item stat-study"><span class="stat-label">Study</span><span class="stat-value" id="hrs-study">0h</span></div>
+        <div class="stat-item stat-sleep"><span class="stat-label">Sleep</span><span class="stat-value" id="hrs-sleep">0h</span></div>
+        <div class="stat-item"><span class="stat-label">Others</span><span class="stat-value" id="hrs-others">0h</span></div>
+    </div>
+
+    <div class="btn-group">
+        <button class="btn btn-add" onclick="addRow()">+ Add Task</button>
+        <button class="btn btn-light" onclick="copyYesterday()">Copy Yesterday</button>
+        <button class="btn btn-light" onclick="restore()">Restore</button>
     </div>
 
     <div id="blocks"></div>
+
+    <input type="file" id="file" hidden>
 </div>
 
 <script>
     const dateEl = document.getElementById("date");
     const blocksEl = document.getElementById("blocks");
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     dateEl.value = new Date().toISOString().split("T")[0];
 
-    function store(d) { localStorage.setItem("myTimeDeep", JSON.stringify(d)); }
-    function loadStore() { return JSON.parse(localStorage.getItem("myTimeDeep") || "{}"); }
+    function store(d) { localStorage.setItem("myTimeFinalV1", JSON.stringify(d)); }
+    function loadStore() { return JSON.parse(localStorage.getItem("myTimeFinalV1") || "{}"); }
 
-    function parseTime(t) {
-        const [h, m] = t.split(":").map(Number);
-        return h + (m / 60);
+    function parseTimeInput(input) {
+        if (!input) return "09:00";
+        let clean = input.toLowerCase().replace(/\s/g, '');
+        let hours, minutes = 0;
+        const ampm = clean.match(/[ap]m/);
+        clean = clean.replace(/[ap]m/, '');
+        if (clean.includes(':')) { [hours, minutes] = clean.split(':').map(Number); }
+        else { hours = parseInt(clean); }
+        if (ampm && ampm[0] === 'pm' && hours < 12) hours += 12;
+        if (ampm && ampm[0] === 'am' && hours === 12) hours = 0;
+        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
     }
 
-    function calculateStats(dayData) {
-        let stats = { lecture: 0, study: 0, sleep: 0, others: 0 };
-        dayData.forEach(b => {
-            const duration = Math.abs(parseTime(b.end) - parseTime(b.start));
-            stats[b.category || 'others'] += duration;
-        });
-        
-        document.getElementById('hrs-lecture').textContent = stats.lecture.toFixed(1) + 'h';
-        document.getElementById('hrs-study').textContent = stats.study.toFixed(1) + 'h';
-        document.getElementById('hrs-sleep').textContent = stats.sleep.toFixed(1) + 'h';
-        document.getElementById('hrs-others').textContent = stats.others.toFixed(1) + 'h';
+    function toPrettyTime(t) {
+        let [h, m] = t.split(":").map(Number);
+        const a = h >= 12 ? "PM" : "AM";
+        h = h % 12 || 12;
+        return `${h}:${m.toString().padStart(2, "0")} ${a}`;
     }
 
     function render() {
         blocksEl.innerHTML = "";
+        buildWeek();
         const all = loadStore();
         let day = all[dateEl.value] || [];
         day.sort((a, b) => a.start.localeCompare(b.start));
-        calculateStats(day);
 
+        // Analytics calculation
+        let stats = { lecture: 0, study: 0, sleep: 0, others: 0 };
+        
         day.forEach((b, i) => {
+            // Stats logic
+            const h1 = b.start.split(':').map(Number);
+            const h2 = b.end.split(':').map(Number);
+            const diff = (h2[0] + h2[1]/60) - (h1[0] + h1[1]/60);
+            stats[b.category || 'others'] += Math.max(0, diff);
+
             const div = document.createElement("div");
-            div.className = `task-card card-${b.category || 'others'} ${b.done ? 'done' : ''}`;
+            div.className = `task-card ${b.done ? 'done' : ''}`;
+            div.style.borderLeft = `6px solid var(--color-${b.category || 'others'})`;
+            
             div.innerHTML = `
-                <div class="task-header">
-                    <div class="time-box" onclick="promptTime(${i})">${b.start} - ${b.end}</div>
-                    <select class="cat-select" onchange="updateBlock(${i}, 'category', this.value)">
+                <div class="time-col">
+                    <input type="text" class="time-box" value="${toPrettyTime(b.start)}" onblur="updateTime(${i},'start',this.value)">
+                    <input type="text" class="time-box" value="${toPrettyTime(b.end)}" onblur="updateTime(${i},'end',this.value)" style="opacity:0.5; font-size:11px">
+                </div>
+                <div style="display:flex; flex-direction:column; gap:8px">
+                    <textarea class="task-text" onchange="edit(${i},'text',this.value)" placeholder="What's the plan?">${b.text}</textarea>
+                    <select class="select-cat" onchange="updateBlock(${i},'category',this.value)">
                         <option value="others" ${b.category==='others'?'selected':''}>Others</option>
                         <option value="lecture" ${b.category==='lecture'?'selected':''}>Lecture</option>
                         <option value="study" ${b.category==='study'?'selected':''}>Self Study</option>
                         <option value="sleep" ${b.category==='sleep'?'selected':''}>Sleep</option>
                     </select>
                 </div>
-                <div class="task-body">
-                    <textarea class="task-text" onchange="updateBlock(${i}, 'text', this.value)" placeholder="Plan something...">${b.text}</textarea>
+                <div style="display:flex; gap:8px">
                     <button class="btn-circle btn-check" onclick="toggle(${i})">✓</button>
                     <button class="btn-circle" onclick="removeRow(${i})" style="background:#fee2e2; color:#ef4444;">×</button>
                 </div>
             `;
             blocksEl.appendChild(div);
         });
+
+        document.getElementById('hrs-lecture').textContent = stats.lecture.toFixed(1) + 'h';
+        document.getElementById('hrs-study').textContent = stats.study.toFixed(1) + 'h';
+        document.getElementById('hrs-sleep').textContent = stats.sleep.toFixed(1) + 'h';
+        document.getElementById('hrs-others').textContent = stats.others.toFixed(1) + 'h';
+    }
+
+    function buildWeek() {
+        const w = document.getElementById("week");
+        w.innerHTML = "";
+        const base = new Date(dateEl.value);
+        for (let i = 0; i < 7; i++) {
+            const d = new Date(base);
+            d.setDate(base.getDate() - base.getDay() + i);
+            const ds = d.toISOString().slice(0, 10);
+            const div = document.createElement("div");
+            div.className = `day-pill ${ds === dateEl.value ? 'active' : ''}`;
+            div.innerHTML = `<div style="font-size:10px; opacity:0.7">${days[i]}</div><b>${d.getDate()}</b>`;
+            div.onclick = () => { dateEl.value = ds; render(); };
+            w.appendChild(div);
+        }
+    }
+
+    function changeDay(n) {
+        const d = new Date(dateEl.value);
+        d.setDate(d.getDate() + n);
+        dateEl.value = d.toISOString().slice(0, 10);
+        render();
+    }
+
+    function updateTime(i, k, v) {
+        const all = loadStore();
+        all[dateEl.value][i][k] = parseTimeInput(v);
+        store(all); render();
     }
 
     function updateBlock(i, k, v) {
         const all = loadStore();
         all[dateEl.value][i][k] = v;
-        store(all); render();
-    }
-
-    function toggle(i) {
-        const all = loadStore();
-        all[dateEl.value][i].done = !all[dateEl.value][i].done;
         store(all); render();
     }
 
@@ -197,25 +232,58 @@
         store(all); render();
     }
 
+    function copyYesterday() {
+        const all = loadStore();
+        const d = new Date(dateEl.value);
+        d.setDate(d.getDate() - 1);
+        const y = d.toISOString().slice(0, 10);
+        if (!all[y]) return alert("No data for yesterday.");
+        all[dateEl.value] = JSON.parse(JSON.stringify(all[y]));
+        store(all); render();
+    }
+
+    function edit(i, k, v) {
+        const all = loadStore();
+        all[dateEl.value][i][k] = v;
+        store(all);
+    }
+
+    function toggle(i) {
+        const all = loadStore();
+        all[dateEl.value][i].done = !all[dateEl.value][i].done;
+        store(all); render();
+    }
+
     function removeRow(i) {
         const all = loadStore();
         all[dateEl.value].splice(i, 1);
         store(all); render();
     }
 
-    function promptTime(i) {
-        const newStart = prompt("Enter Start Time (HH:MM)", "09:00");
-        const newEnd = prompt("Enter End Time (HH:MM)", "10:00");
-        if(newStart && newEnd) {
-            const all = loadStore();
-            all[dateEl.value][i].start = newStart;
-            all[dateEl.value][i].end = newEnd;
-            store(all); render();
-        }
+    function backup() {
+        const d = localStorage.getItem("myTimeFinalV1");
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(new Blob([d]));
+        a.download = `my-flow-data.json`;
+        a.click();
     }
+
+    function restore() { document.getElementById("file").click(); }
+    document.getElementById("file").onchange = e => {
+        const f = e.target.files[0];
+        const r = new FileReader();
+        r.onload = () => { store(JSON.parse(r.result)); render(); };
+        r.readAsText(f);
+    };
 
     dateEl.onchange = render;
     render();
+
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js').catch(()=>{});
+        });
+    }
 </script>
 
 </body>
